@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.netedit.networks">
+
+    <select id="connectionTest" resultType="HashMap">
+
+        SELECT *
+        FROM CONNECTION_TEST
+
+    </select>
+
+    <select id="getLink" resultType="HashMap">
+        SELECT
+            LINK_ID
+            , UP_FROM_NODE
+            , UP_TO_NODE
+            , DOWN_FROM_NODE
+            , DOWN_TO_NODE
+            , WKT
+        FROM NETEDIT_MS_LINK_2020
+    </select>
+
+    <select id="getLinkByZone" parameterType="HashMap" resultType="HashMap">
+
+        SELECT
+        	LINK_ID
+        	, UP_FROM_NODE
+        	, UP_TO_NODE
+        	, UP_LANES
+        	, DOWN_FROM_NODE
+        	, DOWN_TO_NODE
+        	, DOWN_LANES
+        	, ROAD_NAME
+        	, FIRST_DO
+        	, FIRST_GU
+        	, LEFT_TURN_TYPE
+        	, EX_POCKET
+        	, IS_CHANGE_LANES
+            , WKT
+        FROM NETEDIT_MS_LINK_2020
+        WHERE 1=1
+        <choose>
+            <when test='!SGG_CODE.equals("none")'>
+                AND FIRST_GU = #{SGG_CODE}
+            </when>
+            <otherwise>
+                AND ST_Covers(
+                                ST_GeometryFromText(#{WKT}),
+                                GEOM
+                            )
+            </otherwise>
+        </choose>
+
+    </select>
+
+    <select id="getNode" resultType="HashMap">
+
+        SELECT 'FROM' AS DATA_TYPE, NODE_ID, NODE_TYPE, TRAFFIC_LIGHT, NODE_NAME, DISTRICT_ID, DISTRICT_ID2, WKT
+        FROM NETEDIT_MS_NODE_2020
+        WHERE NODE_ID = #{FROM_NODE}
+
+        UNION ALL
+
+        SELECT 'TO' AS DATA_TYPE, NODE_ID, NODE_TYPE, TRAFFIC_LIGHT, NODE_NAME, DISTRICT_ID, DISTRICT_ID2, WKT
+        FROM NETEDIT_MS_NODE_2020
+        WHERE NODE_ID = #{TO_NODE}
+
+    </select>
+
+    <select id="getTurn" resultType="HashMap">
+        SELECT
+            MAP_ID
+            , NODE_ID
+            , WKT
+        FROM NETEDIT_MS_TURN_2020
+
+    </select>
+
+    <select id="getRcline" resultType="HashMap">
+        SELECT WKT
+        FROM NETEDIT_MS_RCLINE
+        WHERE ST_Covers(
+            ST_GeometryFromText(#{WKT}),
+            GEOM
+        )
+    </select>
+
+</mapper>
