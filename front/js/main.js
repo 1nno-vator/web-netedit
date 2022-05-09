@@ -16,6 +16,9 @@ import Point from 'ol/geom/Point';
 import MultiPoint from 'ol/geom/MultiPoint';
 // import { Point, MultiPoint, LineString, Polygon } from 'ol/geom';
 
+import BlueArrowImg from '../data/resize_blue_arrow.png';
+import NormalArrowImg from '../data/resize_normal_arrow.png';
+
 import LayerSwitcher from 'ol-layerswitcher';
 import 'ol-ext/dist/ol-ext.css'
 import UndoRedo from 'ol-ext/interaction/UndoRedo'
@@ -89,7 +92,7 @@ const styleFunction = function (feature) {
       new Style({
         geometry: new Point(to),
         image: new Icon({
-          src: targetFeature && (feature.getId() === targetFeature.getId()) ? 'data/resize_blue_arrow.png' : 'data/resize_normal_arrow.png',
+          src: targetFeature && (feature.getId() === targetFeature.getId()) ? BlueArrowImg : NormalArrowImg,
           color: targetFeature && (feature.getId() === targetFeature.getId()) ? '#0000ff' : '#ffcc33',
           anchor: [0.75, 0.5],
           opacity: map.getView().getZoom() > 16 ? 1 : 0,
@@ -115,7 +118,7 @@ const styleFunction = function (feature) {
             new Style({
               geometry: new Point(end),
               image: new Icon({
-                src: targetFeature && (feature.getId() === targetFeature.getId()) ? 'data/resize_blue_arrow.png' : 'data/resize_normal_arrow.png',
+                src: targetFeature && (feature.getId() === targetFeature.getId()) ? BlueArrowImg : NormalArrowImg,
                 color: targetFeature && (feature.getId() === targetFeature.getId()) ? '#0000ff' : '#ffcc33',
                 opacity: map.getView().getZoom() > 16 ? 1 : 0,
                 anchor: [0.75, 0.5],
@@ -613,73 +616,77 @@ function addSelectInteraction() {
       
       console.log('이전 셀렉트');
 
-      const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
-      const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
-      const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
+      if (targetFeature) {
+        const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
+        const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
+        const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
 
-      let today = new Date();
-      let format = new WKT();
-      
-      let nowLinkId = lgdata.LINK_ID;
+        let today = new Date();
+        let format = new WKT();
 
-      let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
+        let nowLinkId = lgdata.LINK_ID;
 
-      let dataTemplate = 
-      { 
-        REPO_ID: lgdata.LINK_ID,
-        SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
-        LINK_DATA_REPO: {
-          LINK_ID: lgdata.LINK_ID,
-          UP_FROM_NODE: lgdata.UP_FROM_NODE,
-          UP_TO_NODE: lgdata.UP_TO_NODE, 
-          UP_LANES: lgdata.UP_LANES,
-          DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE, 
-          DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
-          DOWN_LANES: lgdata.DOWN_LANES,
-          FIRST_DO: lgdata.FIRST_DO,
-          FIRST_GU: lgdata.FIRST_GU,
-          LEFT_TURN_TYPE: lgdata.LEFT_TURN_TYPE,
-          EX_POCKET: lgdata.EX_POCKET,
-          IS_CHANGE_LANES: lgdata.IS_CHANGE_LANES,
-          WKT: format.writeGeometry(targetFeature.getGeometry()).replace("(", " (").replace(",",", "),
-          FROM_NODE_DATA_REPO: {
-            NODE_ID: fgdata.NODE_ID,
-            NODE_TYPE: fgdata.NODE_TYPE, 
-            TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT, 
-            NODE_NAME: fgdata.NODE_NAME, 
-            DISTRICT_ID: fgdata.DISTRICT_ID, 
-            DISTRICT_ID2: fgdata.DISTRICT_ID2, 
-            WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
-          },
-          TO_NODE_DATA_REPO: {
-            NODE_ID: tgdata.NODE_ID,
-            NODE_TYPE: tgdata.NODE_TYPE, 
-            TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT, 
-            NODE_NAME: tgdata.NODE_NAME, 
-            DISTRICT_ID: tgdata.DISTRICT_ID, 
-            DISTRICT_ID2: tgdata.DISTRICT_ID2, 
-            WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
-          }
+        let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
+
+        let dataTemplate =
+            {
+              REPO_ID: lgdata.LINK_ID,
+              SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
+              LINK_DATA_REPO: {
+                LINK_ID: lgdata.LINK_ID,
+                UP_FROM_NODE: lgdata.UP_FROM_NODE,
+                UP_TO_NODE: lgdata.UP_TO_NODE,
+                UP_LANES: lgdata.UP_LANES,
+                DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE,
+                DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
+                DOWN_LANES: lgdata.DOWN_LANES,
+                FIRST_DO: lgdata.FIRST_DO,
+                FIRST_GU: lgdata.FIRST_GU,
+                LEFT_TURN_TYPE: lgdata.LEFT_TURN_TYPE,
+                EX_POCKET: lgdata.EX_POCKET,
+                IS_CHANGE_LANES: lgdata.IS_CHANGE_LANES,
+                WKT: format.writeGeometry(targetFeature.getGeometry()).replace("(", " (").replace(",",", "),
+                FROM_NODE_DATA_REPO: {
+                  NODE_ID: fgdata.NODE_ID,
+                  NODE_TYPE: fgdata.NODE_TYPE,
+                  TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT,
+                  NODE_NAME: fgdata.NODE_NAME,
+                  DISTRICT_ID: fgdata.DISTRICT_ID,
+                  DISTRICT_ID2: fgdata.DISTRICT_ID2,
+                  WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
+                },
+                TO_NODE_DATA_REPO: {
+                  NODE_ID: tgdata.NODE_ID,
+                  NODE_TYPE: tgdata.NODE_TYPE,
+                  TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT,
+                  NODE_NAME: tgdata.NODE_NAME,
+                  DISTRICT_ID: tgdata.DISTRICT_ID,
+                  DISTRICT_ID2: tgdata.DISTRICT_ID2,
+                  WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
+                }
+              }
+            };
+
+        if (isInclude) {
+          DATA_REPO = DATA_REPO.map(v => {
+            if (v.REPO_ID === nowLinkId) {
+              console.log('이미 포함됐던 애: dataTemplate로 대체');
+              return dataTemplate;
+            }
+            return v;
+          })
+        } else {
+          DATA_REPO.push(dataTemplate);
         }
-      };
 
-      if (isInclude) {
-        DATA_REPO = DATA_REPO.map(v => {
-          if (v.REPO_ID === nowLinkId) {
-            console.log('이미 포함됐던 애: dataTemplate로 대체');
-            return dataTemplate;
-          }
-          return v;
+        targetFeature.setProperties({
+          ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
         })
-      } else {
-        DATA_REPO.push(dataTemplate);
-      }
-      
-      targetFeature.setProperties({
-        ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
-      })
 
-      console.log(targetFeature.getProperties());
+        console.log(targetFeature.getProperties());
+      }
+
+
 
       
       console.log('new select');
@@ -1202,15 +1209,16 @@ function addSplitInteraction() {
     const secondLink = e.features[1];
 
     let format = new WKT();
+    let key = makeKey();
 
     firstLink.setProperties({
       ...firstLink.getProperties(),
-      UP_TO_NODE: "S1",
-      DOWN_FROM_NODE: "S1",
+      UP_TO_NODE: "SL" + key,
+      DOWN_FROM_NODE: "SL" + key,
       WKT: format.writeGeometry(firstLink.getGeometry()).replace("(", " (").replace(",",", "),
 
       TO_NODE_DATA_REPO: {
-        NODE_ID: "S1",
+        NODE_ID: "SL" + key,
         NODE_TYPE: '', 
         TRAFFIC_LIGHT: '', 
         NODE_NAME: '', 
@@ -1225,12 +1233,12 @@ function addSplitInteraction() {
 
     secondLink.setProperties({
       ...secondLink.getProperties(),
-      UP_FROM_NODE: "S1",
-      DOWN_TO_NODE: "S1",
+      UP_FROM_NODE: "SL" + key,
+      DOWN_TO_NODE: "SL" + key,
       WKT: format.writeGeometry(secondLink.getGeometry()).replace("(", " (").replace(",",", "),
 
       FROM_NODE_DATA_REPO: {
-        NODE_ID: 'S1',
+        NODE_ID: 'SL' + key,
         NODE_TYPE: '', 
         TRAFFIC_LIGHT: '', 
         NODE_NAME: '', 
@@ -1261,7 +1269,7 @@ function getExtent() {
 }
 
 function getFeaturesByZone(_displayZoneWKT) {
-  axios.post('http://localhost:8080/api/linkByZone', {
+  axios.post('http://midas.uinetworks.kr:59995/api/linkByZone', {
     wkt: _displayZoneWKT,
     sggCode: document.getElementById('sgg-sb').value
   })
@@ -1277,7 +1285,7 @@ function getFeaturesByZone(_displayZoneWKT) {
 }
 
 function getRcLineByZone(_displayZoneWKT) {
-  axios.post('http://localhost:8080/api/getRcline', {
+  axios.post('http://midas.uinetworks.kr:59995/api/getRcline', {
     wkt: _displayZoneWKT
   })
   .then(({ data }) => {
@@ -1291,7 +1299,7 @@ function getRcLineByZone(_displayZoneWKT) {
 }
 
 function getNodeData(_fromNode, _toNode) {
-  axios.post('http://localhost:8080/api/node', {
+  axios.post('http://midas.uinetworks.kr:59995/api/node', {
     fromNode: _fromNode,
     toNode: _toNode
   })
@@ -1532,7 +1540,7 @@ function convertObject(_arrayData) {
 
 function saveData(_dataType) {
 
-  const urlPrefix = "http://localhost:8080/api";
+  const urlPrefix = "http://midas.uinetworks.kr:59995/api";
   
   let sendData;
 
@@ -1583,7 +1591,7 @@ function getNodeGroup(_nodeGroup) {
 
   let featuresArray = [];
 
-  const fArray = axios.post('http://localhost:8080/api/getNodeGroup', {
+  const fArray = axios.post('http://midas.uinetworks.kr:59995/api/getNodeGroup', {
     nodes: _nodeGroup
   })
   .then(({ data }) => {
