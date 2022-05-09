@@ -27,6 +27,7 @@ import { fromExtent } from 'ol/geom/Polygon';
 import WKT from 'ol/format/WKT';
 
 import Grid from 'tui-grid';
+import Hotkeys from 'hotkeys-js';
 
 // ---------- global value define start ---------
 let map = null;
@@ -35,6 +36,10 @@ let selectedMode, selectedType;
 let targetFeature;
 let redoGeometryInfo;
 let featureType;
+let displayZoneFeature;
+
+let rcShow = true;
+let rcFeaturesRepo = [];
 
 const state = {};
 Object.defineProperty(state, 'mode', {
@@ -322,7 +327,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initGrid();
   domEventRegister();
 
-  getFeaturesByZone('XXX');
+  // getFeaturesByZone('');
 })
 
 // add event listener
@@ -351,77 +356,7 @@ function domEventRegister() {
   })
 
   document.getElementById('SAVE_BTN').addEventListener('click', (e) => {
-    
-    let today = new Date();
-
-    const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
-    const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
-    const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
-
-    let format = new WKT();
-    
-    let nowLinkId = lgdata.LINK_ID;
-
-    let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
-
-    let dataTemplate = 
-    { 
-      REPO_ID: lgdata.LINK_ID,
-      SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
-      LINK_DATA_REPO: {
-        LINK_ID: lgdata.LINK_ID,
-        UP_FROM_NODE: lgdata.UP_FROM_NODE,
-        UP_TO_NODE: lgdata.UP_TO_NODE, 
-        UP_LANES: lgdata.UP_LANES,
-        DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE, 
-        DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
-        DOWN_LANES: lgdata.DOWN_LANES,
-        ROAD_NAME: lgdata.ROAD_NAME,
-        FIRST_DO: lgdata.FIRST_DO,
-        FIRST_GU: lgdata.FIRST_GU,
-        LEFT_TURN_TYPE: lgdata.LEFT_TURN_TYPE,
-        EX_POCKET: lgdata.EX_POCKET,
-        IS_CHANGE_LANES: lgdata.IS_CHANGE_LANES,
-        WKT: format.writeGeometry(targetFeature.getGeometry()).replace("(", " (").replace(",",", "),
-        FROM_NODE_DATA_REPO: {
-          NODE_ID: fgdata.NODE_ID,
-          NODE_TYPE: fgdata.NODE_TYPE, 
-          TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT, 
-          NODE_NAME: fgdata.NODE_NAME, 
-          DISTRICT_ID: fgdata.DISTRICT_ID, 
-          DISTRICT_ID2: fgdata.DISTRICT_ID2, 
-          WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
-        },
-        TO_NODE_DATA_REPO: {
-          NODE_ID: tgdata.NODE_ID,
-          NODE_TYPE: tgdata.NODE_TYPE, 
-          TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT, 
-          NODE_NAME: tgdata.NODE_NAME, 
-          DISTRICT_ID: tgdata.DISTRICT_ID, 
-          DISTRICT_ID2: tgdata.DISTRICT_ID2, 
-          WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
-        }
-      }
-    };
-
-    if (isInclude) {
-      DATA_REPO = DATA_REPO.map(v => {
-        if (v.REPO_ID === nowLinkId) {
-          console.log('이미 포함됐던 애: dataTemplate로 대체');
-          return dataTemplate;
-        }
-        return v;
-      })
-    } else {
-      DATA_REPO.push(dataTemplate);
-    }
-    
-    targetFeature.setProperties({
-      ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
-    })
-    
-    saveData("XXX")
-
+    applyData();
   })
 
   document.getElementById('UNDO_BTN').addEventListener('click', (e) => {
@@ -436,11 +371,12 @@ function domEventRegister() {
 
   document.getElementById('sgg-sb').addEventListener('change', (e) => {
     source.clear();
-    getFeaturesByZone('XXX');
+    getFeaturesByZone('');
   })
 
   document.addEventListener("keydown", (e) => {
     if (e.shiftKey && state.mode === "MODIFY") {
+      map.removeInteraction(modify);
       addSplitInteraction();
     }
 
@@ -455,7 +391,44 @@ function domEventRegister() {
   document.addEventListener("keyup", (e) => {
     if (!e.shiftKey && split) {
       map.removeInteraction(split);
+      map.addInteraction(modify);
     }
+  });
+
+  Hotkeys('ctrl+s', function(event, handler) {
+    // Prevent the default refresh event under WINDOWS system
+    event.preventDefault() 
+    applyData();
+  })
+
+  Hotkeys('num_add', function(event, handler) {
+    event.preventDefault() 
+
+    if(rcShow === true) {
+
+    } else {
+      rcFeaturesRepo.forEach(v => source.addFeature(v));
+      rcShow = true;
+    }
+    
+    
+  });
+
+  Hotkeys('num_subtract', function(event, handler) {
+    event.preventDefault() 
+
+    if(rcShow === true) {
+      rcFeaturesRepo.forEach(v => source.removeFeature(v));
+      rcShow = false;
+    } else {
+      
+    }
+
+  });
+
+  Hotkeys('ctrl+r', function(event, handler) {
+    event.preventDefault() 
+    clearing();
   });
 }
 
@@ -485,7 +458,7 @@ function initMap() {
 
       let displayZonePolygon = fromExtent(nowDisplayExtent);
 
-      let displayZoneFeature = new Feature({
+      displayZoneFeature = new Feature({
         geometry: displayZonePolygon
       })
 
@@ -614,7 +587,7 @@ function addSelectInteraction() {
     "add", 
     function (e) { 
       
-      console.log('이전 셀렉트');
+      console.log('select');
 
       if (targetFeature) {
         const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
@@ -670,7 +643,7 @@ function addSelectInteraction() {
         if (isInclude) {
           DATA_REPO = DATA_REPO.map(v => {
             if (v.REPO_ID === nowLinkId) {
-              console.log('이미 포함됐던 애: dataTemplate로 대체');
+              // console.log('이미 포함됐던 애: dataTemplate로 대체');
               return dataTemplate;
             }
             return v;
@@ -683,13 +656,7 @@ function addSelectInteraction() {
           ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
         })
 
-        console.log(targetFeature.getProperties());
       }
-
-
-
-      
-      console.log('new select');
       
       targetFeature = e.element;
       if (state.mode === 'SELECT') {
@@ -699,6 +666,8 @@ function addSelectInteraction() {
       if (targetFeature.get('FROM_NODE_DATA_REPO')) {
         setGridData(targetFeature.get('FROM_NODE_DATA_REPO'), 'FROM_NODE');
         setGridData(targetFeature.get('TO_NODE_DATA_REPO'), 'TO_NODE');
+
+        console.log('console1')
 
         const fromNode = targetFeature.get('UP_FROM_NODE');
         const toNode = targetFeature.get('UP_TO_NODE');
@@ -729,8 +698,10 @@ function addSelectInteraction() {
         const toNode = targetFeature.get('UP_TO_NODE');
         getNodeData(fromNode, toNode);
 
+        console.log('console2')
+
         // 한 노드만 기존재하는 경우에 대한 처리
-        if (fromNode === "S1") {
+        if (fromNode.substring(0,2) === "SL") {
           setGridData({
             NODE_ID: "S1",
             NODE_TYPE: '',
@@ -740,7 +711,7 @@ function addSelectInteraction() {
             DISTRICT_ID2: ''
           }, 'FROM_NODE');
         }
-        if (toNode === "S1") {
+        if (toNode.substring(0,2) === "SL") {
           setGridData({
             NODE_ID: "S1",
             NODE_TYPE: '',
@@ -775,8 +746,7 @@ function addDrawInteraction() {
   })
 
   draw.on('drawend', function(e) {
-    console.log(e);
-
+    
     let today = new Date();
 
     const key = makeKey();
@@ -827,8 +797,6 @@ function addDrawInteraction() {
     }
 
     const uniqueNodeArray = Array.from(new Set(nodeArray)).filter(v => v != null);
-
-    console.log(uniqueNodeArray);
 
     targetFeature = e.feature;
 
@@ -883,16 +851,12 @@ function addDrawInteraction() {
         
         setGridData(f, 'LINK');
   
-        console.log(DATA_REPO);
-        console.log('------------');
-        
         return data;
       })
       .then((data) => {
         for(let i=0; i<data.length; i++) {
           source.removeFeature(data[i])
         }
-        console.log('clear all node');
   
         const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
         const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
@@ -1052,12 +1016,10 @@ function addDrawInteraction() {
       targetFeature.setProperties({
         ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
       })
-
-      console.log(targetFeature.getProperties());
       
     }
 
-    console.log(DATA_REPO);
+    
         
     
 
@@ -1068,9 +1030,11 @@ function addDrawInteraction() {
 }
 
 function addModifyInteraction() {
+  
   modify = new Modify({
     source: source,
     pixelTolerance: 15,
+    wrapX: false,
     condition: function(e) {
       const targetFeatureTypes = [];
       
@@ -1090,8 +1054,7 @@ function addModifyInteraction() {
   modify.on('modifystart', function(e) {
     
     targetFeature = e.features.getArray()[0];
-    console.log(targetFeature);
-
+    
     if (targetFeature.get('FROM_NODE_DATA_REPO')) {
       setGridData(targetFeature.get('FROM_NODE_DATA_REPO'), 'FROM_NODE');
       setGridData(targetFeature.get('TO_NODE_DATA_REPO'), 'TO_NODE');
@@ -1107,8 +1070,7 @@ function addModifyInteraction() {
   })
 
   modify.on('modifyend', function(f) {
-    console.log('end');
-    
+        
     const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
     const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
     const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
@@ -1200,6 +1162,7 @@ function addSplitInteraction() {
 
   split.on('beforesplit', function(e, a, b) {
     console.log('beforesplit');
+    const origin = e.original;
   })
 
   split.on('aftersplit', function(e, a, b) {
@@ -1208,15 +1171,26 @@ function addSplitInteraction() {
     const firstLink = e.features[0];
     const secondLink = e.features[1];
 
+    const originLinkId = firstLink.get("LINK_ID");
+    console.log(originLinkId);
+
     let format = new WKT();
     let key = makeKey();
+
+    // const from_data = convertObject(FROM_NODE_GRID_INSTANCE.getData());
+    // const to_data = convertObject(TO_NODE_GRID_INSTANCE.getData());
+    
+    // console.log(from_data);
+    // console.log(to_data);
+
+    const temp = JSON.parse(JSON.stringify(firstLink.getProperties()));
+    console.log(temp);
 
     firstLink.setProperties({
       ...firstLink.getProperties(),
       UP_TO_NODE: "SL" + key,
       DOWN_FROM_NODE: "SL" + key,
       WKT: format.writeGeometry(firstLink.getGeometry()).replace("(", " (").replace(",",", "),
-
       TO_NODE_DATA_REPO: {
         NODE_ID: "SL" + key,
         NODE_TYPE: '', 
@@ -1236,7 +1210,6 @@ function addSplitInteraction() {
       UP_FROM_NODE: "SL" + key,
       DOWN_TO_NODE: "SL" + key,
       WKT: format.writeGeometry(secondLink.getGeometry()).replace("(", " (").replace(",",", "),
-
       FROM_NODE_DATA_REPO: {
         NODE_ID: 'SL' + key,
         NODE_TYPE: '', 
@@ -1250,8 +1223,15 @@ function addSplitInteraction() {
 
     secondLink.set("LINK_ID", secondLink.get("UP_FROM_NODE") + "_" + secondLink.get("UP_TO_NODE"))
     secondLink.setId(secondLink.get("LINK_ID"));
-    
+
+    const fLinkProps = firstLink.getProperties();
+    const sLinkProps = secondLink.getProperties();
+    console.log(fLinkProps);
+    console.log(sLinkProps);
+
     unselectAllFeature();
+
+    select.getFeatures().push(firstLink);
     
   })
   
@@ -1304,6 +1284,9 @@ function getNodeData(_fromNode, _toNode) {
     toNode: _toNode
   })
   .then(({ data }) => {
+
+    console.log('node sb');
+    console.log(data)
 
     data.forEach((v) => {
       const newObj = {
@@ -1382,6 +1365,8 @@ function makeRcLineFeatures(_data) {
     })
     source.addFeature(_feature);
     _feature.setStyle(rcLineStyleFunction);
+
+    rcFeaturesRepo.push(_feature);
   }
 
 }
@@ -1538,6 +1523,84 @@ function convertObject(_arrayData) {
   return obj;
 }
 
+function applyData() {
+  console.log('APPLY_DATA')
+
+  if (targetFeature) {
+    let today = new Date();
+
+    const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
+    const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
+    const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
+  
+    let format = new WKT();
+    
+    let nowLinkId = lgdata.LINK_ID;
+  
+    let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
+  
+    let dataTemplate = 
+    { 
+      REPO_ID: lgdata.LINK_ID,
+      SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
+      LINK_DATA_REPO: {
+        LINK_ID: lgdata.LINK_ID,
+        UP_FROM_NODE: lgdata.UP_FROM_NODE,
+        UP_TO_NODE: lgdata.UP_TO_NODE, 
+        UP_LANES: lgdata.UP_LANES,
+        DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE, 
+        DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
+        DOWN_LANES: lgdata.DOWN_LANES,
+        ROAD_NAME: lgdata.ROAD_NAME,
+        FIRST_DO: lgdata.FIRST_DO,
+        FIRST_GU: lgdata.FIRST_GU,
+        LEFT_TURN_TYPE: lgdata.LEFT_TURN_TYPE,
+        EX_POCKET: lgdata.EX_POCKET,
+        IS_CHANGE_LANES: lgdata.IS_CHANGE_LANES,
+        WKT: format.writeGeometry(targetFeature.getGeometry()).replace("(", " (").replace(",",", "),
+        FROM_NODE_DATA_REPO: {
+          NODE_ID: fgdata.NODE_ID,
+          NODE_TYPE: fgdata.NODE_TYPE, 
+          TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT, 
+          NODE_NAME: fgdata.NODE_NAME, 
+          DISTRICT_ID: fgdata.DISTRICT_ID, 
+          DISTRICT_ID2: fgdata.DISTRICT_ID2, 
+          WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
+        },
+        TO_NODE_DATA_REPO: {
+          NODE_ID: tgdata.NODE_ID,
+          NODE_TYPE: tgdata.NODE_TYPE, 
+          TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT, 
+          NODE_NAME: tgdata.NODE_NAME, 
+          DISTRICT_ID: tgdata.DISTRICT_ID, 
+          DISTRICT_ID2: tgdata.DISTRICT_ID2, 
+          WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
+        }
+      }
+    };
+  
+    if (isInclude) {
+      DATA_REPO = DATA_REPO.map(v => {
+        if (v.REPO_ID === nowLinkId) {
+          console.log('이미 포함됐던 애: dataTemplate로 대체');
+          return dataTemplate;
+        }
+        return v;
+      })
+    } else {
+      DATA_REPO.push(dataTemplate);
+    }
+    
+    targetFeature.setProperties({
+      ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
+    })
+    
+    saveData("XXX")
+  }
+  
+  
+}
+
 function saveData(_dataType) {
 
   const urlPrefix = `${common.API_PATH}/api`;
@@ -1578,7 +1641,10 @@ function saveData(_dataType) {
   axios.post(`${urlPrefix}/saveData`, DATA_REPO)
   .then(({ data }) => {
 
-    console.log(data);
+    if (data) {
+      clearing();
+      alert('저장되었습니다.');
+    }
 
   })
   .catch(function (error) {
@@ -1641,4 +1707,24 @@ function makeKey() {
   let ss = today.getSeconds() < 10 ? "0" + String(today.getSeconds()) : String(today.getSeconds());
 
   return yyyy + mm + dd + hh + mi + ss;
+}
+
+function clearing() {
+  DATA_REPO = [];
+  targetFeature = null;
+  
+  let format = new WKT(),
+  wkt = format.writeGeometry(displayZoneFeature.getGeometry());
+
+  source.clear();
+
+  if (document.getElementById('sgg-sb').value === 'none') {
+    getFeaturesByZone(wkt);
+  } else {
+    getFeaturesByZone('');
+  }
+
+  getRcLineByZone(wkt);
+
+
 }
