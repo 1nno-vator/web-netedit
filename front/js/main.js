@@ -1269,7 +1269,7 @@ function getExtent() {
 }
 
 function getFeaturesByZone(_displayZoneWKT) {
-  axios.post('http://midas.uinetworks.kr:59995/api/linkByZone', {
+  axios.post(`${common.API_PATH}/api/linkByZone`, {
     wkt: _displayZoneWKT,
     sggCode: document.getElementById('sgg-sb').value
   })
@@ -1285,7 +1285,7 @@ function getFeaturesByZone(_displayZoneWKT) {
 }
 
 function getRcLineByZone(_displayZoneWKT) {
-  axios.post('http://midas.uinetworks.kr:59995/api/getRcline', {
+  axios.post(`${common.API_PATH}/api/getRcline`, {
     wkt: _displayZoneWKT
   })
   .then(({ data }) => {
@@ -1299,7 +1299,7 @@ function getRcLineByZone(_displayZoneWKT) {
 }
 
 function getNodeData(_fromNode, _toNode) {
-  axios.post('http://midas.uinetworks.kr:59995/api/node', {
+  axios.post(`${common.API_PATH}/api/node`, {
     fromNode: _fromNode,
     toNode: _toNode
   })
@@ -1540,7 +1540,7 @@ function convertObject(_arrayData) {
 
 function saveData(_dataType) {
 
-  const urlPrefix = "http://midas.uinetworks.kr:59995/api";
+  const urlPrefix = `${common.API_PATH}/api`;
   
   let sendData;
 
@@ -1591,7 +1591,7 @@ function getNodeGroup(_nodeGroup) {
 
   let featuresArray = [];
 
-  const fArray = axios.post('http://midas.uinetworks.kr:59995/api/getNodeGroup', {
+  const fArray = axios.post(`${common.API_PATH}/api/getNodeGroup`, {
     nodes: _nodeGroup
   })
   .then(({ data }) => {

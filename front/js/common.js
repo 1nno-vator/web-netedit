@@ -3,6 +3,8 @@ import { View } from 'ol';
 import XYZ from 'ol/source/XYZ';
 import TileLayer from 'ol/layer/Tile';
 
+export const API_PATH = import.meta.env.VITE_API_PATH;
+
 export const _baseMapSource = new XYZ({
     url: 'http://api.vworld.kr/req/wmts/1.0.0/AF0CADCE-1626-37BE-B85F-770A282483BD/Satellite/{z}/{y}/{x}.jpeg'
 })
