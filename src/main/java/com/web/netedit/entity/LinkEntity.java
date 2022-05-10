@@ -22,11 +22,11 @@ public class LinkEntity {
 
     private String UP_FROM_NODE;
     private String UP_TO_NODE;
-    private int UP_LANES;
+    private String UP_LANES;
 
     private String DOWN_FROM_NODE;
     private String DOWN_TO_NODE;
-    private int DOWN_LANES;
+    private String DOWN_LANES;
 
     private String ROAD_NAME;
     private String FIRST_DO;
@@ -35,6 +35,8 @@ public class LinkEntity {
     private String EX_POCKET;
     private String IS_CHANGE_LANES;
     private String WKT;
+
+    private String USE_YN;
 
     public void setAll(LinkEntity _linkEntity) {
         this.UP_FROM_NODE = _linkEntity.UP_FROM_NODE;
@@ -52,5 +54,7 @@ public class LinkEntity {
         this.EX_POCKET = _linkEntity.EX_POCKET;
         this.IS_CHANGE_LANES = _linkEntity.IS_CHANGE_LANES;
         this.WKT = _linkEntity.WKT;
+
+        this.USE_YN = _linkEntity.USE_YN != null ? _linkEntity.USE_YN : "Y";
     }
 }

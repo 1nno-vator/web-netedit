@@ -85,6 +85,8 @@ public class NetworkController {
 
         }
 
+        networkService.updateGeometry();
+
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("LINK_ENTITY_LIST", linkEntityList);
         resultMap.put("FROM_NODE_ENTITY_LIST", fromNodeEntityList);
@@ -106,6 +108,16 @@ public class NetworkController {
         List<NodeEntity> list = networkService.getNodeGroup(nodes);
 
         return list;
+    }
+
+    @RequestMapping(value = "/deleteData", method = RequestMethod.POST)
+    public Map<String, Object> deleteData(@RequestBody Map map) {
+        String id = (String) map.get("id");
+        String dataType = (String) map.get("dataType");
+        System.out.println(id);
+        System.out.println(dataType);
+
+        return networkService.deleteData(id, dataType);
     }
 
 }

@@ -58,14 +58,16 @@ Object.defineProperty(state, 'mode', {
     if (selectedMode === 'CREATE') {
       removeAllInteraction();
       addDrawInteraction();
-      setGridEditable();
     } else if(selectedMode === 'MODIFY') {
       removeAllInteraction();
       addModifyInteraction();
-      setGridEditable();
     } else {
       removeAllInteraction();
       addSelectInteraction();
+    }
+
+    if (LINK_GRID_INSTANCE && FROM_NODE_GRID_INSTANCE && TO_NODE_GRID_INSTANCE) {
+      setGridEditable()
     }
 
   },
@@ -108,16 +110,16 @@ const styleFunction = function (feature) {
         zIndex: 999
       })
     );
-  
+
     let segCount = 0;
-  
+
     geometry.forEachSegment(function (start, end) {
       segCount++;
       if(segCount % 3 === 0) {
         const dx = end[0] - start[0];
         const dy = end[1] - start[1];
         const rotation = Math.atan2(dy, dx);
-        
+
           // arrows
           styles.push(
             new Style({
@@ -135,31 +137,31 @@ const styleFunction = function (feature) {
           );
       }
     });
-  
+
     let fromRegularShapeStyle = new Style({
-      image: new RegularShape({ 
-        radius: 6, 
-        points:6, 
-        fill: new Fill({ 
-          color: '#f00' 
-        }) 
+      image: new RegularShape({
+        radius: 6,
+        points:6,
+        fill: new Fill({
+          color: '#f00'
+        })
       }),
       zIndex: 999,
       geometry: new Point(from)
     })
-  
+
     let toRegularShapeStyle = new Style({
-      image: new RegularShape({ 
-        radius: 6, 
-        points:6, 
-        fill: new Fill({ 
-          color: '#f00' 
-        }) 
+      image: new RegularShape({
+        radius: 6,
+        points:6,
+        fill: new Fill({
+          color: '#f00'
+        })
       }),
       zIndex: 999,
       geometry: new Point(to)
     })
-  
+
     styles.push(fromRegularShapeStyle);
     styles.push(toRegularShapeStyle);
   }
@@ -187,66 +189,66 @@ const rcLineStyleFunction = function (feature) {
   let segCount = 0;
 
   if (map.getView().getZoom() > 20) {
-    
+
     geometry.forEachSegment(function (start, end) {
       let regularShapeStyle = new Style({
-        image: new RegularShape({ 
-          radius: 4, 
-          points:4, 
-          fill: new Fill({ 
-            color: 'rgba(240, 105, 255, 0.7)' 
-          }) 
+        image: new RegularShape({
+          radius: 4,
+          points:4,
+          fill: new Fill({
+            color: 'rgba(240, 105, 255, 0.7)'
+          })
         }),
         zIndex: 100,
         geometry: new MultiPoint(start, end)
-      })  
+      })
       styles.push(regularShapeStyle);
-    });  
+    });
 
   } else if (map.getView().getZoom() > 18) {
     let fromToRegularShapeStyle = new Style({
-      image: new RegularShape({ 
-        radius: 4, 
-        points:4, 
-        fill: new Fill({ 
-          color: 'rgba(240, 105, 255, 0.7)' 
-        }) 
+      image: new RegularShape({
+        radius: 4,
+        points:4,
+        fill: new Fill({
+          color: 'rgba(240, 105, 255, 0.7)'
+        })
       }),
       zIndex: 100,
       geometry: new MultiPoint(from, to)
-    })  
+    })
     styles.push(fromToRegularShapeStyle);
-    
+
     geometry.forEachSegment(function (start, end) {
-      
+
       segCount++;
       if(segCount % 3 === 0) {
         let regularShapeStyle = new Style({
-          image: new RegularShape({ 
-            radius: 4, 
-            points:4, 
-            fill: new Fill({ 
-              color: 'rgba(240, 105, 255, 0.7)' 
-            }) 
+          image: new RegularShape({
+            radius: 4,
+            points:4,
+            fill: new Fill({
+              color: 'rgba(240, 105, 255, 0.7)'
+            })
           }),
           zIndex: 100,
           geometry: new MultiPoint(start, end)
-        })  
+        })
         styles.push(regularShapeStyle);
       }
-      
-    });  
+
+    });
 
   } else {
 
   }
-  
+
   return styles;
 };
 
 const source = new VectorSource({
   features: new Collection(),
-  wrapX: false 
+  wrapX: false
 });
 const layer = new VectorLayer({
   source: source
@@ -278,14 +280,16 @@ const DEFAULT_COLUMN = [
 
 // GLOBAL_VALUE
 
-let DATA_REPO_TEMPLATE = 
-{ 
+let SHOW_USE_YN = 'Y';
+
+let DATA_REPO_TEMPLATE =
+{
   LINK_DATA_REPO: {
     LINK_ID: '',
     UP_FROM_NODE: '',
-    UP_TO_NODE: '', 
+    UP_TO_NODE: '',
     UP_LANES: '',
-    DOWN_FROM_NODE: '', 
+    DOWN_FROM_NODE: '',
     DOWN_TO_NODE: '',
     DOWN_LANES: '',
     ROAD_NAME: '',
@@ -297,28 +301,42 @@ let DATA_REPO_TEMPLATE =
     WKT: '',
     FROM_NODE_DATA_REPO: {
       NODE_ID: '',
-      NODE_TYPE: '', 
-      TRAFFIC_LIGHT: '', 
-      NODE_NAME: '', 
-      DISTRICT_ID: '', 
-      DISTRICT_ID2: '', 
+      NODE_TYPE: '',
+      TRAFFIC_LIGHT: '',
+      NODE_NAME: '',
+      DISTRICT_ID: '',
+      DISTRICT_ID2: '',
       WKT: ''
     },
     TO_NODE_DATA_REPO: {
       NODE_ID: '',
-      NODE_TYPE: '', 
-      TRAFFIC_LIGHT: '', 
-      NODE_NAME: '', 
-      DISTRICT_ID: '', 
-      DISTRICT_ID2: '', 
+      NODE_TYPE: '',
+      TRAFFIC_LIGHT: '',
+      NODE_NAME: '',
+      DISTRICT_ID: '',
+      DISTRICT_ID2: '',
       WKT: ''
     }
-  } 
+  }
 }
 
 let DATA_REPO = [
-  
+
 ]
+let DELETE_DATA_REPO = [];
+Object.defineProperty(DATA_REPO, 'data', {
+    get: function () {
+      return this || [];
+    },
+    set: function (data) {
+      // this._data = data;
+      // const repoData = data;
+      // console.log(repoData)
+      console.log(DATA_REPO);
+      console.log(DELETE_DATA_REPO);
+    }
+  }
+)
 
 // ---------- global value define end ---------
 
@@ -327,12 +345,13 @@ document.addEventListener('DOMContentLoaded', function() {
   initGrid();
   domEventRegister();
 
+  setGridEditable();
   // getFeaturesByZone('');
 })
 
 // add event listener
 function domEventRegister() {
-  
+
   // document.getElementById('CREATE-NODE-BTN').addEventListener('click', (e) => {
   //   state.mode = 'CREATE-NODE';
   // })
@@ -397,43 +416,74 @@ function domEventRegister() {
 
   Hotkeys('ctrl+s', function(event, handler) {
     // Prevent the default refresh event under WINDOWS system
-    event.preventDefault() 
+    event.preventDefault()
     applyData();
   })
 
   Hotkeys('num_add', function(event, handler) {
-    event.preventDefault() 
+    event.preventDefault()
 
-    if(rcShow === true) {
+    let format = new WKT(),
+    wkt = format.writeGeometry(displayZoneFeature.getGeometry());
 
-    } else {
-      rcFeaturesRepo.forEach(v => source.addFeature(v));
-      rcShow = true;
-    }
-    
-    
+    getRcLineByZone(wkt);
+
+
   });
 
   Hotkeys('num_subtract', function(event, handler) {
-    event.preventDefault() 
+    event.preventDefault()
 
-    if(rcShow === true) {
-      rcFeaturesRepo.forEach(v => source.removeFeature(v));
-      rcShow = false;
-    } else {
-      
-    }
+    source.getFeatures().forEach(v => {
+      if (v.get("featureType") === 'RCLINE') {
+        source.removeFeature(v);
+      }
+    })
 
   });
 
   Hotkeys('ctrl+r', function(event, handler) {
-    event.preventDefault() 
+    event.preventDefault()
     clearing();
   });
+
+  Hotkeys('ctrl+y', function(event, handler) {
+    // Prevent the default refresh event under WINDOWS system
+    event.preventDefault()
+    SHOW_USE_YN = 'Y';
+
+    let format = new WKT();
+    let wkt = format.writeGeometry(displayZoneFeature.getGeometry());
+
+    if (document.getElementById('sgg-sb').value === 'none') {
+      getFeaturesByZone(wkt);
+    } else {
+      getFeaturesByZone('');
+    }
+
+    unselectAllFeature();
+  })
+
+  Hotkeys('ctrl+n', function(event, handler) {
+    // Prevent the default refresh event under WINDOWS system
+    event.preventDefault()
+    SHOW_USE_YN = 'N';
+
+    let format = new WKT();
+    let wkt = format.writeGeometry(displayZoneFeature.getGeometry());
+
+    if (document.getElementById('sgg-sb').value === 'none') {
+      getFeaturesByZone(wkt);
+    } else {
+      getFeaturesByZone('');
+    }
+
+    unselectAllFeature();
+  })
 }
 
 function initMap() {
-  
+
   map = new Map({
     target: 'map',
     layers: [
@@ -442,16 +492,15 @@ function initMap() {
       layer
     ],
     view: common._mainMapView
-  });  
+  });
 
-  map.on('pointermove', function(e) {    
+  map.on('pointermove', function(e) {
     map.getTargetElement().style.cursor = map.hasFeatureAtPixel(e.pixel) ? 'pointer' : '';
   })
 
   map.on('moveend', function(e) {
     // zoom 할 수록 커짐
     let newZoom = map.getView().getZoom();
-    console.log(`nowZoom: ${newZoom}`)
 
     if (newZoom > 16) {
       let nowDisplayExtent = getExtent();
@@ -475,16 +524,29 @@ function initMap() {
 
   map.on('click', function(e) {
     const isFeature = map.hasFeatureAtPixel(e.pixel);
-    
-
-    console.log('map click');
-    console.log(isFeature);
-    
-
 
     if (!isFeature) {
       unselectAllFeature();
     }
+  })
+
+  map.getViewport().addEventListener('contextmenu', function (evt) {
+    evt.preventDefault();
+    const pixel = map.getEventPixel(evt)
+    console.log(pixel);
+    map.forEachFeatureAtPixel(pixel, function(_f) {
+      console.log(_f);
+      console.log(_f.get("featureType"))
+      if (_f.get("featureType") === "LINK") {
+
+        const isConfirm = confirm("삭제하시겠습니까?");
+        if (isConfirm) {
+          deleteData(_f.get("LINK_ID"),"LINK")
+        }
+
+      }
+    })
+
   })
 
 
@@ -535,11 +597,11 @@ function initGrid() {
     bodyHeight: 200,
     columns: DEFAULT_COLUMN
   });
-  
+
   // LINK_GRID_INSTANCE.resetData(newData); // Call API of instance's public method
-  
+
   Grid.applyTheme('striped'); // Call API of static method
-  
+
   setGridEditable();
 
 }
@@ -572,7 +634,7 @@ function addSelectInteraction() {
   select = new Select({
     source: layer.getSource(),
     filter: function(f, l) {
-      
+
       if (f.get('featureType') === "LINK") {
         return true;
       } else {
@@ -584,10 +646,8 @@ function addSelectInteraction() {
   })
 
   select.getFeatures().on(
-    "add", 
-    function (e) { 
-      
-      console.log('select');
+    "add",
+    function (e) {
 
       if (targetFeature) {
         const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
@@ -657,74 +717,157 @@ function addSelectInteraction() {
         })
 
       }
-      
+
       targetFeature = e.element;
+
       if (state.mode === 'SELECT') {
-        redoGeometryInfo = targetFeature.getGeometry().getCoordinates();
+        redoGeometryInfo = e.element.getGeometry().getCoordinates();
       }
 
-      if (targetFeature.get('FROM_NODE_DATA_REPO')) {
-        setGridData(targetFeature.get('FROM_NODE_DATA_REPO'), 'FROM_NODE');
-        setGridData(targetFeature.get('TO_NODE_DATA_REPO'), 'TO_NODE');
+      const fromNode = e.element.get('UP_FROM_NODE');
+      const toNode = e.element.get('UP_TO_NODE');
+      const linkId = e.element.get('LINK_ID');
 
-        console.log('console1')
+      let format = new WKT();
+      let today = new Date();
 
-        const fromNode = targetFeature.get('UP_FROM_NODE');
-        const toNode = targetFeature.get('UP_TO_NODE');
+      const asynGetNodeData = async () => {
+        const result = await getNodeData(fromNode, toNode)
+            .then((data) => {
 
-        // 한 노드만 기존재하는 경우에 대한 처리
-        if (fromNode === "S1") {
-          setGridData({
-            NODE_ID: "S1",
-            NODE_TYPE: '',
-            NODE_NAME: '',
-            TRAFFIC_LIGHT: '',
-            DISTRICT_ID: '',
-            DISTRICT_ID2: ''
-          }, 'FROM_NODE');
-        }
-        if (toNode === "S1") {
-          setGridData({
-            NODE_ID: "S1",
-            NODE_TYPE: '',
-            NODE_NAME: '',
-            TRAFFIC_LIGHT: '',
-            DISTRICT_ID: '',
-            DISTRICT_ID2: ''
-          }, 'TO_NODE');
-        }
-      } else {
-        const fromNode = targetFeature.get('UP_FROM_NODE');
-        const toNode = targetFeature.get('UP_TO_NODE');
-        getNodeData(fromNode, toNode);
+              console.log('console2')
 
-        console.log('console2')
+              if (!e.element.get("FROM_NODE_DATA_REPO")) {
+                console.log("FROM_NODE_DATA_REPO 없음")
+                const fromNodeGridData = convertObject(FROM_NODE_GRID_INSTANCE.getData());
 
-        // 한 노드만 기존재하는 경우에 대한 처리
-        if (fromNode.substring(0,2) === "SL") {
-          setGridData({
-            NODE_ID: "S1",
-            NODE_TYPE: '',
-            NODE_NAME: '',
-            TRAFFIC_LIGHT: '',
-            DISTRICT_ID: '',
-            DISTRICT_ID2: ''
-          }, 'FROM_NODE');
-        }
-        if (toNode.substring(0,2) === "SL") {
-          setGridData({
-            NODE_ID: "S1",
-            NODE_TYPE: '',
-            NODE_NAME: '',
-            TRAFFIC_LIGHT: '',
-            DISTRICT_ID: '',
-            DISTRICT_ID2: ''
-          }, 'TO_NODE');
-        }
+                const fromNodeDataRepoObj = {
+                  NODE_ID: fromNodeGridData.NODE_ID,
+                  NODE_TYPE: fromNodeGridData.NODE_TYPE,
+                  TRAFFIC_LIGHT: fromNodeGridData.TRAFFIC_LIGHT,
+                  NODE_NAME: fromNodeGridData.NODE_NAME,
+                  DISTRICT_ID: fromNodeGridData.DISTRICT_ID,
+                  DISTRICT_ID2: fromNodeGridData.DISTRICT_ID2,
+                  WKT: format.writeGeometry(new Point(e.element.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
+                }
 
+                e.element.set("FROM_NODE_DATA_REPO", fromNodeDataRepoObj);
+              }
+
+              if (!e.element.get("TO_NODE_DATA_REPO")) {
+                console.log("TO_NODE_DATA_REPO 없음")
+                const toNodeGridData = convertObject(TO_NODE_GRID_INSTANCE.getData());
+
+                const toNodeDataRepoObj = {
+                  NODE_ID: toNodeGridData.NODE_ID,
+                  NODE_TYPE: toNodeGridData.NODE_TYPE,
+                  TRAFFIC_LIGHT: toNodeGridData.TRAFFIC_LIGHT,
+                  NODE_NAME: toNodeGridData.NODE_NAME,
+                  DISTRICT_ID: toNodeGridData.DISTRICT_ID,
+                  DISTRICT_ID2: toNodeGridData.DISTRICT_ID2,
+                  WKT: format.writeGeometry(new Point(e.element.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
+                }
+
+                e.element.set("TO_NODE_DATA_REPO", toNodeDataRepoObj);
+              }
+
+              // 한 노드만 기존재하는 경우에 대한 처리
+              if (fromNode.substring(0,2) === "SL") {
+                setGridData({
+                  NODE_ID: fromNode,
+                  NODE_TYPE: '',
+                  NODE_NAME: '',
+                  TRAFFIC_LIGHT: '',
+                  DISTRICT_ID: '',
+                  DISTRICT_ID2: ''
+                }, 'FROM_NODE');
+              }
+              if (toNode.substring(0,2) === "SL") {
+                setGridData({
+                  NODE_ID: toNode,
+                  NODE_TYPE: '',
+                  NODE_NAME: '',
+                  TRAFFIC_LIGHT: '',
+                  DISTRICT_ID: '',
+                  DISTRICT_ID2: ''
+                }, 'TO_NODE');
+              }
+            })
+          .then(() => {
+            const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
+            const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
+            const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
+
+            let nowLinkId = linkId;
+
+            let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
+
+            let dataTemplate =
+            {
+              REPO_ID: lgdata.LINK_ID,
+              SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
+              LINK_DATA_REPO: {
+                LINK_ID: lgdata.LINK_ID,
+                UP_FROM_NODE: lgdata.UP_FROM_NODE,
+                UP_TO_NODE: lgdata.UP_TO_NODE,
+                UP_LANES: lgdata.UP_LANES,
+                DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE,
+                DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
+                DOWN_LANES: lgdata.DOWN_LANES,
+                ROAD_NAME: lgdata.ROAD_NAME,
+                FIRST_DO: lgdata.FIRST_DO,
+                FIRST_GU: lgdata.FIRST_GU,
+                LEFT_TURN_TYPE: lgdata.LEFT_TURN_TYPE,
+                EX_POCKET: lgdata.EX_POCKET,
+                IS_CHANGE_LANES: lgdata.IS_CHANGE_LANES,
+                WKT: format.writeGeometry(e.element.getGeometry()).replace("(", " (").replace(",",", "),
+                FROM_NODE_DATA_REPO: {
+                  NODE_ID: fgdata.NODE_ID,
+                  NODE_TYPE: fgdata.NODE_TYPE,
+                  TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT,
+                  NODE_NAME: fgdata.NODE_NAME,
+                  DISTRICT_ID: fgdata.DISTRICT_ID,
+                  DISTRICT_ID2: fgdata.DISTRICT_ID2,
+                  WKT: format.writeGeometry(new Point(e.element.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
+                },
+                TO_NODE_DATA_REPO: {
+                  NODE_ID: tgdata.NODE_ID,
+                  NODE_TYPE: tgdata.NODE_TYPE,
+                  TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT,
+                  NODE_NAME: tgdata.NODE_NAME,
+                  DISTRICT_ID: tgdata.DISTRICT_ID,
+                  DISTRICT_ID2: tgdata.DISTRICT_ID2,
+                  WKT: format.writeGeometry(new Point(e.element.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
+                }
+              }
+            };
+
+            if (isInclude) {
+              DATA_REPO = DATA_REPO.map(v => {
+                if (v.REPO_ID === nowLinkId) {
+                  console.log('이미 포함됐던 애: dataTemplate로 대체');
+                  return dataTemplate;
+                }
+                return v;
+              })
+            } else {
+              DATA_REPO.push(dataTemplate);
+            }
+
+            e.element.setProperties({
+              ...e.element.getProperties(), ...dataTemplate.LINK_DATA_REPO
+            })
+
+          })
+
+        console.log(DATA_REPO);
+        console.log(DELETE_DATA_REPO);
       }
-      
+
+      asynGetNodeData();
+
       setGridData(e.element, 'LINK');
+
     }
   );
 
@@ -746,7 +889,7 @@ function addDrawInteraction() {
   })
 
   draw.on('drawend', function(e) {
-    
+
     let today = new Date();
 
     const key = makeKey();
@@ -755,14 +898,14 @@ function addDrawInteraction() {
     const format = new WKT();
 
     f.setId(key);
-    f.setProperties({      
+    f.setProperties({
       'featureType': 'LINK',
       'LINK_ID': "CL" + key,
       'UP_FROM_NODE': '',
-      'UP_TO_NODE': '', 
+      'UP_TO_NODE': '',
       'UP_LANES': '',
       'ROAD_NAME': '',
-      'DOWN_FROM_NODE': '', 
+      'DOWN_FROM_NODE': '',
       'DOWN_TO_NODE': '',
       'DOWN_LANES': '',
       'FIRST_DO': '',
@@ -801,16 +944,16 @@ function addDrawInteraction() {
     targetFeature = e.feature;
 
     if (uniqueNodeArray.length > 0) { // 기존재하는 노드 간 연결
-      
+
       const _f = getNodeGroup(uniqueNodeArray).then((data) => {
-    
+
         let fromNodeOfDrawFeature = null;
         let toNodeOfDrawFeature = null;
-  
+
         const firstCoordinateOfNodeGroup = source.getFeaturesAtCoordinate(f.getGeometry().getFirstCoordinate()).find(v => v.get("featureType") === "NODE");
         const lastCoordinateOfNodeGroup = source.getFeaturesAtCoordinate(f.getGeometry().getLastCoordinate()).find(v => v.get("featureType") === "NODE");
-        
-        fromNodeOfDrawFeature = firstCoordinateOfNodeGroup 
+
+        fromNodeOfDrawFeature = firstCoordinateOfNodeGroup
                                 ? JSON.parse(JSON.stringify(firstCoordinateOfNodeGroup.getProperties()))
                                 : {
                                   DATA_TYPE: 'FROM',
@@ -834,97 +977,106 @@ function addDrawInteraction() {
                                   DISTRICT_ID2: ''
                                 }
                                 ;
-    
+
+        console.log('나임');
+
         const fromNode = fromNodeOfDrawFeature.NODE_ID;
         f.set("UP_FROM_NODE", fromNode);
         const toNode = toNodeOfDrawFeature.NODE_ID;
         f.set("UP_TO_NODE", toNode);
-        getNodeData(fromNode, toNode);
+        const gnData = async () => {
+          await getNodeData(fromNode, toNode).then((data) => {
+            // 한 노드만 기존재하는 경우에 대한 처리
+            if (fromNode === ("CFN" + key)) {
+              setGridData(fromNodeOfDrawFeature, 'FROM_NODE');
+            }
+            if (toNode === ("CTN" + key)) {
+              setGridData(toNodeOfDrawFeature, 'TO_NODE');
+            }
 
-        // 한 노드만 기존재하는 경우에 대한 처리
-        if (fromNode === ("CFN" + key)) {
-          setGridData(fromNodeOfDrawFeature, 'FROM_NODE');
-        }
-        if (toNode === ("CTN" + key)) {
-          setGridData(toNodeOfDrawFeature, 'TO_NODE');
-        }
-        
-        setGridData(f, 'LINK');
-  
+            setGridData(f, 'LINK');
+            return data;
+          }).then((data) => {
+            for(let i=0; i<data.length; i++) {
+              source.removeFeature(data[i])
+            }
+
+            const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
+            const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
+            const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
+
+            let nowLinkId = f.LINK_ID;
+
+            let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
+
+            console.log(fgdata);
+            console.log(tgdata);
+
+            let dataTemplate =
+            {
+              REPO_ID: lgdata.LINK_ID,
+              SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
+              LINK_DATA_REPO: {
+                LINK_ID: lgdata.LINK_ID,
+                UP_FROM_NODE: lgdata.UP_FROM_NODE,
+                UP_TO_NODE: lgdata.UP_TO_NODE,
+                UP_LANES: lgdata.UP_LANES,
+                DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE,
+                DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
+                DOWN_LANES: lgdata.DOWN_LANES,
+                ROAD_NAME: lgdata.ROAD_NAME,
+                FIRST_DO: lgdata.FIRST_DO,
+                FIRST_GU: lgdata.FIRST_GU,
+                LEFT_TURN_TYPE: lgdata.LEFT_TURN_TYPE,
+                EX_POCKET: lgdata.EX_POCKET,
+                IS_CHANGE_LANES: lgdata.IS_CHANGE_LANES,
+                WKT: format.writeGeometry(targetFeature.getGeometry()).replace("(", " (").replace(",",", "),
+                FROM_NODE_DATA_REPO: {
+                  NODE_ID: fgdata.NODE_ID,
+                  NODE_TYPE: fgdata.NODE_TYPE,
+                  TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT,
+                  NODE_NAME: fgdata.NODE_NAME,
+                  DISTRICT_ID: fgdata.DISTRICT_ID,
+                  DISTRICT_ID2: fgdata.DISTRICT_ID2,
+                  WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
+                },
+                TO_NODE_DATA_REPO: {
+                  NODE_ID: tgdata.NODE_ID,
+                  NODE_TYPE: tgdata.NODE_TYPE,
+                  TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT,
+                  NODE_NAME: tgdata.NODE_NAME,
+                  DISTRICT_ID: tgdata.DISTRICT_ID,
+                  DISTRICT_ID2: tgdata.DISTRICT_ID2,
+                  WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
+                }
+              }
+            };
+
+            if (isInclude) {
+              DATA_REPO = DATA_REPO.map(v => {
+                if (v.REPO_ID === nowLinkId) {
+                  console.log('이미 포함됐던 애: dataTemplate로 대체');
+                  return dataTemplate;
+                }
+                return v;
+              })
+            } else {
+              DATA_REPO.push(dataTemplate);
+            }
+
+            targetFeature.setProperties({
+              ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
+            })
+
+            console.log(targetFeature.getProperties());
+            console.log(DATA_REPO);
+          });
+        };
+
+        gnData();
+
         return data;
       })
-      .then((data) => {
-        for(let i=0; i<data.length; i++) {
-          source.removeFeature(data[i])
-        }
-  
-        const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
-        const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
-        const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
-  
-        let nowLinkId = f.LINK_ID;
-  
-        let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
-  
-        let dataTemplate = 
-        { 
-          REPO_ID: lgdata.LINK_ID,
-          SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
-          LINK_DATA_REPO: {
-            LINK_ID: lgdata.LINK_ID,
-            UP_FROM_NODE: lgdata.UP_FROM_NODE,
-            UP_TO_NODE: lgdata.UP_TO_NODE, 
-            UP_LANES: lgdata.UP_LANES,
-            DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE, 
-            DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
-            DOWN_LANES: lgdata.DOWN_LANES,
-            ROAD_NAME: lgdata.ROAD_NAME,
-            FIRST_DO: lgdata.FIRST_DO,
-            FIRST_GU: lgdata.FIRST_GU,
-            LEFT_TURN_TYPE: lgdata.LEFT_TURN_TYPE,
-            EX_POCKET: lgdata.EX_POCKET,
-            IS_CHANGE_LANES: lgdata.IS_CHANGE_LANES,
-            WKT: format.writeGeometry(targetFeature.getGeometry()).replace("(", " (").replace(",",", "),
-            FROM_NODE_DATA_REPO: {
-              NODE_ID: fgdata.NODE_ID,
-              NODE_TYPE: fgdata.NODE_TYPE, 
-              TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT, 
-              NODE_NAME: fgdata.NODE_NAME, 
-              DISTRICT_ID: fgdata.DISTRICT_ID, 
-              DISTRICT_ID2: fgdata.DISTRICT_ID2, 
-              WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
-            },
-            TO_NODE_DATA_REPO: {
-              NODE_ID: tgdata.NODE_ID,
-              NODE_TYPE: tgdata.NODE_TYPE, 
-              TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT, 
-              NODE_NAME: tgdata.NODE_NAME, 
-              DISTRICT_ID: tgdata.DISTRICT_ID, 
-              DISTRICT_ID2: tgdata.DISTRICT_ID2, 
-              WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
-            }
-          }
-        };
-  
-        if (isInclude) {
-          DATA_REPO = DATA_REPO.map(v => {
-            if (v.REPO_ID === nowLinkId) {
-              console.log('이미 포함됐던 애: dataTemplate로 대체');
-              return dataTemplate;
-            }
-            return v;
-          })
-        } else {
-          DATA_REPO.push(dataTemplate);
-        }
-        
-        targetFeature.setProperties({
-          ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
-        })
-  
-        console.log(targetFeature.getProperties());
-        console.log(DATA_REPO);
-      });
 
     } else { // 양 노드가 신규생성인 경우
 
@@ -932,7 +1084,7 @@ function addDrawInteraction() {
       f.set("UP_TO_NODE", "CTN" + key);
 
       setGridData(e.feature, 'LINK');
-      
+
       setGridData({
         DATA_TYPE: 'FROM',
         NODE_ID: "CFN" + key,
@@ -942,7 +1094,7 @@ function addDrawInteraction() {
         DISTRICT_ID: '',
         DISTRICT_ID2: ''
       }, 'FROM_NODE');
-      
+
       setGridData({
         DATA_TYPE: 'TO',
         NODE_ID: "CTN" + key,
@@ -956,21 +1108,21 @@ function addDrawInteraction() {
       const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
       const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
       const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
-      
+
       let nowLinkId = lgdata.LINK_ID;
 
       let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
 
-      let dataTemplate = 
-      { 
+      let dataTemplate =
+      {
         REPO_ID: lgdata.LINK_ID,
         SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
         LINK_DATA_REPO: {
           LINK_ID: lgdata.LINK_ID,
           UP_FROM_NODE: lgdata.UP_FROM_NODE,
-          UP_TO_NODE: lgdata.UP_TO_NODE, 
+          UP_TO_NODE: lgdata.UP_TO_NODE,
           UP_LANES: lgdata.UP_LANES,
-          DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE, 
+          DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE,
           DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
           DOWN_LANES: lgdata.DOWN_LANES,
           ROAD_NAME: lgdata.ROAD_NAME,
@@ -982,20 +1134,20 @@ function addDrawInteraction() {
           WKT: format.writeGeometry(targetFeature.getGeometry()).replace("(", " (").replace(",",", "),
           FROM_NODE_DATA_REPO: {
             NODE_ID: fgdata.NODE_ID,
-            NODE_TYPE: fgdata.NODE_TYPE, 
-            TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT, 
-            NODE_NAME: fgdata.NODE_NAME, 
-            DISTRICT_ID: fgdata.DISTRICT_ID, 
-            DISTRICT_ID2: fgdata.DISTRICT_ID2, 
+            NODE_TYPE: fgdata.NODE_TYPE,
+            TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT,
+            NODE_NAME: fgdata.NODE_NAME,
+            DISTRICT_ID: fgdata.DISTRICT_ID,
+            DISTRICT_ID2: fgdata.DISTRICT_ID2,
             WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
           },
           TO_NODE_DATA_REPO: {
             NODE_ID: tgdata.NODE_ID,
-            NODE_TYPE: tgdata.NODE_TYPE, 
-            TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT, 
-            NODE_NAME: tgdata.NODE_NAME, 
-            DISTRICT_ID: tgdata.DISTRICT_ID, 
-            DISTRICT_ID2: tgdata.DISTRICT_ID2, 
+            NODE_TYPE: tgdata.NODE_TYPE,
+            TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT,
+            NODE_NAME: tgdata.NODE_NAME,
+            DISTRICT_ID: tgdata.DISTRICT_ID,
+            DISTRICT_ID2: tgdata.DISTRICT_ID2,
             WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
           }
         }
@@ -1012,32 +1164,34 @@ function addDrawInteraction() {
       } else {
         DATA_REPO.push(dataTemplate);
       }
-      
+
       targetFeature.setProperties({
         ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
       })
-      
+
+      console.log(DATA_REPO);
+
     }
 
-    
-        
-    
 
-    
+
+
+
+
   })
 
   addSnapInteraction();
 }
 
 function addModifyInteraction() {
-  
+
   modify = new Modify({
     source: source,
     pixelTolerance: 15,
     wrapX: false,
     condition: function(e) {
       const targetFeatureTypes = [];
-      
+
       map.forEachFeatureAtPixel(e.pixel, function(_target) {
         if (_target.get("featureType")) {
           targetFeatureTypes.push(_target.get("featureType"));
@@ -1052,9 +1206,9 @@ function addModifyInteraction() {
   });
 
   modify.on('modifystart', function(e) {
-    
+
     targetFeature = e.features.getArray()[0];
-    
+
     if (targetFeature.get('FROM_NODE_DATA_REPO')) {
       setGridData(targetFeature.get('FROM_NODE_DATA_REPO'), 'FROM_NODE');
       setGridData(targetFeature.get('TO_NODE_DATA_REPO'), 'TO_NODE');
@@ -1063,35 +1217,35 @@ function addModifyInteraction() {
       const toNode = targetFeature.get('UP_TO_NODE');
       getNodeData(fromNode, toNode);
     }
-    
+
     setGridData(targetFeature, 'LINK');
     redoGeometryInfo = e.features.getArray()[0].getGeometry().getCoordinates();
     // 아예 속성정보에 최초 좌표정보를 갖고 있는게 좋을 듯
   })
 
   modify.on('modifyend', function(f) {
-        
+
     const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
     const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
     const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
 
     let today = new Date();
     let format = new WKT();
-    
+
     let nowLinkId = lgdata.LINK_ID;
 
     let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
 
-    let dataTemplate = 
-    { 
+    let dataTemplate =
+    {
       REPO_ID: lgdata.LINK_ID,
       SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
       LINK_DATA_REPO: {
         LINK_ID: lgdata.LINK_ID,
         UP_FROM_NODE: lgdata.UP_FROM_NODE,
-        UP_TO_NODE: lgdata.UP_TO_NODE, 
+        UP_TO_NODE: lgdata.UP_TO_NODE,
         UP_LANES: lgdata.UP_LANES,
-        DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE, 
+        DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE,
         DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
         DOWN_LANES: lgdata.DOWN_LANES,
         ROAD_NAME: lgdata.ROAD_NAME,
@@ -1103,20 +1257,20 @@ function addModifyInteraction() {
         WKT: format.writeGeometry(targetFeature.getGeometry()).replace("(", " (").replace(",",", "),
         FROM_NODE_DATA_REPO: {
           NODE_ID: fgdata.NODE_ID,
-          NODE_TYPE: fgdata.NODE_TYPE, 
-          TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT, 
-          NODE_NAME: fgdata.NODE_NAME, 
-          DISTRICT_ID: fgdata.DISTRICT_ID, 
-          DISTRICT_ID2: fgdata.DISTRICT_ID2, 
+          NODE_TYPE: fgdata.NODE_TYPE,
+          TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT,
+          NODE_NAME: fgdata.NODE_NAME,
+          DISTRICT_ID: fgdata.DISTRICT_ID,
+          DISTRICT_ID2: fgdata.DISTRICT_ID2,
           WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
         },
         TO_NODE_DATA_REPO: {
           NODE_ID: tgdata.NODE_ID,
-          NODE_TYPE: tgdata.NODE_TYPE, 
-          TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT, 
-          NODE_NAME: tgdata.NODE_NAME, 
-          DISTRICT_ID: tgdata.DISTRICT_ID, 
-          DISTRICT_ID2: tgdata.DISTRICT_ID2, 
+          NODE_TYPE: tgdata.NODE_TYPE,
+          TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT,
+          NODE_NAME: tgdata.NODE_NAME,
+          DISTRICT_ID: tgdata.DISTRICT_ID,
+          DISTRICT_ID2: tgdata.DISTRICT_ID2,
           WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
         }
       }
@@ -1133,7 +1287,7 @@ function addModifyInteraction() {
     } else {
       DATA_REPO.push(dataTemplate);
     }
-    
+
     targetFeature.setProperties({
       ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
     })
@@ -1156,18 +1310,24 @@ function addSnapInteraction() {
 
 function addSplitInteraction() {
   split = new Split(
-  {	
+  {
     sources: source
   });
 
   split.on('beforesplit', function(e, a, b) {
     console.log('beforesplit');
     const origin = e.original;
+
+    DATA_REPO = DATA_REPO.filter(v => {
+      return v.REPO_ID !== origin.get("LINK_ID")
+    })
+
+    DELETE_DATA_REPO.push(origin.get("LINK_ID"));
   })
 
   split.on('aftersplit', function(e, a, b) {
     console.log('aftersplit');
-    
+
     const firstLink = e.features[0];
     const secondLink = e.features[1];
 
@@ -1177,15 +1337,6 @@ function addSplitInteraction() {
     let format = new WKT();
     let key = makeKey();
 
-    // const from_data = convertObject(FROM_NODE_GRID_INSTANCE.getData());
-    // const to_data = convertObject(TO_NODE_GRID_INSTANCE.getData());
-    
-    // console.log(from_data);
-    // console.log(to_data);
-
-    const temp = JSON.parse(JSON.stringify(firstLink.getProperties()));
-    console.log(temp);
-
     firstLink.setProperties({
       ...firstLink.getProperties(),
       UP_TO_NODE: "SL" + key,
@@ -1193,17 +1344,20 @@ function addSplitInteraction() {
       WKT: format.writeGeometry(firstLink.getGeometry()).replace("(", " (").replace(",",", "),
       TO_NODE_DATA_REPO: {
         NODE_ID: "SL" + key,
-        NODE_TYPE: '', 
-        TRAFFIC_LIGHT: '', 
-        NODE_NAME: '', 
-        DISTRICT_ID: '', 
-        DISTRICT_ID2: '', 
+        NODE_TYPE: '',
+        TRAFFIC_LIGHT: '',
+        NODE_NAME: '',
+        DISTRICT_ID: '',
+        DISTRICT_ID2: '',
         WKT: format.writeGeometry(new Point(firstLink.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
       }
     })
 
     firstLink.set("LINK_ID", firstLink.get("UP_FROM_NODE") + "_" + firstLink.get("UP_TO_NODE"))
     firstLink.setId(firstLink.get("LINK_ID"));
+
+    console.log(firstLink.get("UP_FROM_NODE") + "_" + firstLink.get("UP_TO_NODE"));
+    console.log(secondLink.get("UP_FROM_NODE") + "_" + firstLink.get("UP_TO_NODE"));
 
     secondLink.setProperties({
       ...secondLink.getProperties(),
@@ -1212,11 +1366,11 @@ function addSplitInteraction() {
       WKT: format.writeGeometry(secondLink.getGeometry()).replace("(", " (").replace(",",", "),
       FROM_NODE_DATA_REPO: {
         NODE_ID: 'SL' + key,
-        NODE_TYPE: '', 
-        TRAFFIC_LIGHT: '', 
-        NODE_NAME: '', 
-        DISTRICT_ID: '', 
-        DISTRICT_ID2: '', 
+        NODE_TYPE: '',
+        TRAFFIC_LIGHT: '',
+        NODE_NAME: '',
+        DISTRICT_ID: '',
+        DISTRICT_ID2: '',
         WKT: format.writeGeometry(new Point(secondLink.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
       }
     })
@@ -1224,17 +1378,31 @@ function addSplitInteraction() {
     secondLink.set("LINK_ID", secondLink.get("UP_FROM_NODE") + "_" + secondLink.get("UP_TO_NODE"))
     secondLink.setId(secondLink.get("LINK_ID"));
 
+    console.log(firstLink.get("UP_FROM_NODE") + "_" + firstLink.get("UP_TO_NODE"));
+    console.log(secondLink.get("UP_FROM_NODE") + "_" + secondLink.get("UP_TO_NODE"));
+
     const fLinkProps = firstLink.getProperties();
     const sLinkProps = secondLink.getProperties();
     console.log(fLinkProps);
     console.log(sLinkProps);
 
     unselectAllFeature();
+    select.getFeatures().push(secondLink);
 
-    select.getFeatures().push(firstLink);
-    
+    const checkRepo = setInterval(() => {
+      const checkSecondLinkRepo = DATA_REPO.some(v => {
+        return v.REPO_ID === secondLink.getId()
+      });
+
+      if (checkSecondLinkRepo) {
+        clearInterval(checkRepo)
+        unselectAllFeature();
+        select.getFeatures().push(firstLink);
+      }
+    }, 10)
+
   })
-  
+
   map.addInteraction(split);
 }
 
@@ -1261,7 +1429,7 @@ function getFeaturesByZone(_displayZoneWKT) {
   .catch(function (error) {
     console.log(error);
   });
-  
+
 }
 
 function getRcLineByZone(_displayZoneWKT) {
@@ -1279,14 +1447,11 @@ function getRcLineByZone(_displayZoneWKT) {
 }
 
 function getNodeData(_fromNode, _toNode) {
-  axios.post(`${common.API_PATH}/api/node`, {
+  return axios.post(`${common.API_PATH}/api/node`, {
     fromNode: _fromNode,
     toNode: _toNode
   })
   .then(({ data }) => {
-
-    console.log('node sb');
-    console.log(data)
 
     data.forEach((v) => {
       const newObj = {
@@ -1306,6 +1471,10 @@ function getNodeData(_fromNode, _toNode) {
       }
     })
 
+    return data;
+  })
+  .then((data) => {
+    return data;
   })
   .catch(function (error) {
     console.log(error);
@@ -1314,24 +1483,37 @@ function getNodeData(_fromNode, _toNode) {
 
 function makeLinkFeatures(_data) {
 
-  const dataLength = _data.length; 
+  const dataLength = _data.length;
   const format = new WKT();
 
   for (let i=0; i<dataLength; i++) {
     const d = _data[i];
+    // if (d.link_id === '474621090') {
+    //   console.log(d);
+    //   console.log(d.use_yn);
+    //   console.log(SHOW_USE_YN)
+    // }
+    if (d.use_yn !== SHOW_USE_YN) {
+      let removeTarget = source.getFeatureById(d.link_id);
+      if (removeTarget) {
+        source.removeFeature(removeTarget)
+      }
+
+      continue;
+    };
     let _feature = format.readFeature(d.wkt,  {
       dataProjection: 'EPSG:4326',
       featureProjection: 'EPSG:4326'
     });
     _feature.setId(d.link_id);
-    _feature.setProperties({      
+    _feature.setProperties({
       'featureType': 'LINK',
       'LINK_ID': d.link_id,
       'UP_FROM_NODE': d.up_from_node,
-      'UP_TO_NODE': d.up_to_node, 
+      'UP_TO_NODE': d.up_to_node,
       'UP_LANES': d.up_lanes,
       'ROAD_NAME': d.road_name,
-      'DOWN_FROM_NODE': d.down_from_node, 
+      'DOWN_FROM_NODE': d.down_from_node,
       'DOWN_TO_NODE': d.down_to_node,
       'DOWN_LANES': d.down_lanes,
       'FIRST_DO': d.first_do,
@@ -1349,8 +1531,10 @@ function makeLinkFeatures(_data) {
 
 function makeRcLineFeatures(_data) {
 
-  const dataLength = _data.length; 
+  const dataLength = _data.length;
   const format = new WKT();
+
+  rcFeaturesRepo = [];
 
   for (let i=0; i<dataLength; i++) {
     const d = _data[i];
@@ -1358,15 +1542,13 @@ function makeRcLineFeatures(_data) {
       dataProjection: 'EPSG:4326',
       featureProjection: 'EPSG:4326'
     });
-    _feature.setId(d.link_id);
-    _feature.setProperties({      
+    _feature.setId(d.ufid);
+    _feature.setProperties({
       'featureType': 'RCLINE',
       'WKT': d.wkt
     })
     source.addFeature(_feature);
     _feature.setStyle(rcLineStyleFunction);
-
-    rcFeaturesRepo.push(_feature);
   }
 
 }
@@ -1375,10 +1557,8 @@ function setGridData(_data, _dataType) {
   // { name: 컬럼명, value: 값 }
 
   let props = null;
-  
+
   if (_dataType === 'LINK') {
-    console.log(_data);
-    console.log(props);
     props = _data.getProperties()
   } else {
     props = _data;
@@ -1391,7 +1571,7 @@ function setGridData(_data, _dataType) {
     columnNames.push(key.toUpperCase());
   }
 
-  const dataMap = columnNames.filter(v => v !== 'GEOMETRY' && v !== 'FEATURETYPE' && v !== 'WKT' && v != 'FROM_NODE_DATA_REPO' && v != 'TO_NODE_DATA_REPO').map(v => {
+  const dataMap = columnNames.filter(v => v !== 'USE_YN' && v !== 'GEOMETRY' && v !== 'FEATURETYPE' && v !== 'WKT' && v != 'FROM_NODE_DATA_REPO' && v != 'TO_NODE_DATA_REPO').map(v => {
     return {
       name: v,
       value: props[v]
@@ -1405,7 +1585,7 @@ function setGridData(_data, _dataType) {
   } else if (_dataType === 'TO_NODE') {
     TO_NODE_GRID_INSTANCE.resetData(dataMap);
   }
-  
+
 
 }
 
@@ -1435,21 +1615,21 @@ function setGridEditable() {
 
         let today = new Date();
         let format = new WKT();
-        
+
         let nowLinkId = lgdata.LINK_ID;
 
         let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
 
-        let dataTemplate = 
-        { 
+        let dataTemplate =
+        {
           REPO_ID: lgdata.LINK_ID,
           SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
           LINK_DATA_REPO: {
             LINK_ID: lgdata.LINK_ID,
             UP_FROM_NODE: lgdata.UP_FROM_NODE,
-            UP_TO_NODE: lgdata.UP_TO_NODE, 
+            UP_TO_NODE: lgdata.UP_TO_NODE,
             UP_LANES: lgdata.UP_LANES,
-            DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE, 
+            DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE,
             DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
             DOWN_LANES: lgdata.DOWN_LANES,
             FIRST_DO: lgdata.FIRST_DO,
@@ -1460,20 +1640,20 @@ function setGridEditable() {
             WKT: format.writeGeometry(targetFeature.getGeometry()).replace("(", " (").replace(",",", "),
             FROM_NODE_DATA_REPO: {
               NODE_ID: fgdata.NODE_ID,
-              NODE_TYPE: fgdata.NODE_TYPE, 
-              TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT, 
-              NODE_NAME: fgdata.NODE_NAME, 
-              DISTRICT_ID: fgdata.DISTRICT_ID, 
-              DISTRICT_ID2: fgdata.DISTRICT_ID2, 
+              NODE_TYPE: fgdata.NODE_TYPE,
+              TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT,
+              NODE_NAME: fgdata.NODE_NAME,
+              DISTRICT_ID: fgdata.DISTRICT_ID,
+              DISTRICT_ID2: fgdata.DISTRICT_ID2,
               WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
             },
             TO_NODE_DATA_REPO: {
               NODE_ID: tgdata.NODE_ID,
-              NODE_TYPE: tgdata.NODE_TYPE, 
-              TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT, 
-              NODE_NAME: tgdata.NODE_NAME, 
-              DISTRICT_ID: tgdata.DISTRICT_ID, 
-              DISTRICT_ID2: tgdata.DISTRICT_ID2, 
+              NODE_TYPE: tgdata.NODE_TYPE,
+              TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT,
+              NODE_NAME: tgdata.NODE_NAME,
+              DISTRICT_ID: tgdata.DISTRICT_ID,
+              DISTRICT_ID2: tgdata.DISTRICT_ID2,
               WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
             }
           }
@@ -1490,7 +1670,7 @@ function setGridEditable() {
         } else {
           DATA_REPO.push(dataTemplate);
         }
-        
+
         targetFeature.setProperties({
           ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
         })
@@ -1532,23 +1712,23 @@ function applyData() {
     const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
     const fgdata = convertObject(FROM_NODE_GRID_INSTANCE.getData());
     const tgdata = convertObject(TO_NODE_GRID_INSTANCE.getData());
-  
+
     let format = new WKT();
-    
+
     let nowLinkId = lgdata.LINK_ID;
-  
+
     let isInclude = DATA_REPO.find(v => v.REPO_ID === nowLinkId);
-  
-    let dataTemplate = 
-    { 
+
+    let dataTemplate =
+    {
       REPO_ID: lgdata.LINK_ID,
       SAVE_TM: String(today.getHours()) + String(today.getMinutes()) + String(today.getSeconds()) + String(today.getMilliseconds()),
       LINK_DATA_REPO: {
         LINK_ID: lgdata.LINK_ID,
         UP_FROM_NODE: lgdata.UP_FROM_NODE,
-        UP_TO_NODE: lgdata.UP_TO_NODE, 
+        UP_TO_NODE: lgdata.UP_TO_NODE,
         UP_LANES: lgdata.UP_LANES,
-        DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE, 
+        DOWN_FROM_NODE: lgdata.DOWN_FROM_NODE,
         DOWN_TO_NODE: lgdata.DOWN_TO_NODE,
         DOWN_LANES: lgdata.DOWN_LANES,
         ROAD_NAME: lgdata.ROAD_NAME,
@@ -1560,25 +1740,25 @@ function applyData() {
         WKT: format.writeGeometry(targetFeature.getGeometry()).replace("(", " (").replace(",",", "),
         FROM_NODE_DATA_REPO: {
           NODE_ID: fgdata.NODE_ID,
-          NODE_TYPE: fgdata.NODE_TYPE, 
-          TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT, 
-          NODE_NAME: fgdata.NODE_NAME, 
-          DISTRICT_ID: fgdata.DISTRICT_ID, 
-          DISTRICT_ID2: fgdata.DISTRICT_ID2, 
+          NODE_TYPE: fgdata.NODE_TYPE,
+          TRAFFIC_LIGHT: fgdata.TRAFFIC_LIGHT,
+          NODE_NAME: fgdata.NODE_NAME,
+          DISTRICT_ID: fgdata.DISTRICT_ID,
+          DISTRICT_ID2: fgdata.DISTRICT_ID2,
           WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
         },
         TO_NODE_DATA_REPO: {
           NODE_ID: tgdata.NODE_ID,
-          NODE_TYPE: tgdata.NODE_TYPE, 
-          TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT, 
-          NODE_NAME: tgdata.NODE_NAME, 
-          DISTRICT_ID: tgdata.DISTRICT_ID, 
-          DISTRICT_ID2: tgdata.DISTRICT_ID2, 
+          NODE_TYPE: tgdata.NODE_TYPE,
+          TRAFFIC_LIGHT: tgdata.TRAFFIC_LIGHT,
+          NODE_NAME: tgdata.NODE_NAME,
+          DISTRICT_ID: tgdata.DISTRICT_ID,
+          DISTRICT_ID2: tgdata.DISTRICT_ID2,
           WKT: format.writeGeometry(new Point(targetFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
         }
       }
     };
-  
+
     if (isInclude) {
       DATA_REPO = DATA_REPO.map(v => {
         if (v.REPO_ID === nowLinkId) {
@@ -1590,21 +1770,21 @@ function applyData() {
     } else {
       DATA_REPO.push(dataTemplate);
     }
-    
+
     targetFeature.setProperties({
       ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
     })
-    
+
     saveData("XXX")
   }
-  
-  
+
+
 }
 
 function saveData(_dataType) {
 
   const urlPrefix = `${common.API_PATH}/api`;
-  
+
   let sendData;
 
   // console.log(targetFeature.getProperties());
@@ -1641,6 +1821,8 @@ function saveData(_dataType) {
   axios.post(`${urlPrefix}/saveData`, DATA_REPO)
   .then(({ data }) => {
 
+
+
     if (data) {
       clearing();
       alert('저장되었습니다.');
@@ -1661,7 +1843,7 @@ function getNodeGroup(_nodeGroup) {
     nodes: _nodeGroup
   })
   .then(({ data }) => {
-    
+
     let format = new WKT()
 
     for (let i=0; i<data.length; i++) {
@@ -1671,7 +1853,7 @@ function getNodeGroup(_nodeGroup) {
         featureProjection: 'EPSG:4326'
       });
       _feature.setId(d.node_id);
-      _feature.setProperties({      
+      _feature.setProperties({
         'featureType': 'NODE',
         'NODE_ID': d.node_ID,
         'NODE_NAME': d.node_NAME,
@@ -1711,8 +1893,9 @@ function makeKey() {
 
 function clearing() {
   DATA_REPO = [];
+  DELETE_DATA_REPO = [];
   targetFeature = null;
-  
+
   let format = new WKT(),
   wkt = format.writeGeometry(displayZoneFeature.getGeometry());
 
@@ -1727,4 +1910,21 @@ function clearing() {
   getRcLineByZone(wkt);
 
 
+}
+
+function deleteData(_id, _dataType) {
+  axios.post(`${common.API_PATH}/api/deleteData`, {
+      id: _id,
+      dataType: _dataType
+    })
+    .then(({ data }) => {
+
+      console.log(data);
+      clearing();
+      alert('저장되었습니다.');
+
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
 }

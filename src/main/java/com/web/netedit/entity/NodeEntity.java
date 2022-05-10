@@ -27,6 +27,8 @@ public class NodeEntity {
     private String DISTRICT_ID2;
     private String WKT;
 
+    private String USE_YN;
+
     public void setAll(NodeEntity _nodeEntity) {
         this.NODE_TYPE = _nodeEntity.NODE_TYPE;
         this.TRAFFIC_LIGHT = _nodeEntity.TRAFFIC_LIGHT;
@@ -34,6 +36,8 @@ public class NodeEntity {
         this.DISTRICT_ID = _nodeEntity.DISTRICT_ID;
         this.DISTRICT_ID2 = _nodeEntity.DISTRICT_ID2;
         this.WKT = _nodeEntity.WKT;
+
+        this.USE_YN = _nodeEntity.USE_YN != null ? _nodeEntity.USE_YN : "Y";
     }
 
 }

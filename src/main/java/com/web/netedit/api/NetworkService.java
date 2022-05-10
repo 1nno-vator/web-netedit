@@ -65,6 +65,7 @@ public class NetworkService {
 
         LinkEntity newLinkEntity = new LinkEntity();
         newLinkEntity = (LinkEntity) util.convertMapToObject(_linkDataRepo, newLinkEntity);
+        newLinkEntity.setUSE_YN("Y");
 
         Optional<LinkEntity> originLinkEntity = linkRepository.findById((String) _linkDataRepo.get("LINK_ID"));
 
@@ -84,6 +85,7 @@ public class NetworkService {
 
         NodeEntity newNodeEntity = new NodeEntity();
         newNodeEntity = (NodeEntity) util.convertMapToObject(_nodeDataRepo, newNodeEntity);
+        newNodeEntity.setUSE_YN("Y");
 
         Optional<NodeEntity> originNodeEntity = nodeRepository.findById((String) _nodeDataRepo.get("NODE_ID"));
 
@@ -109,5 +111,33 @@ public class NetworkService {
         }
 
         return nodeEntityList;
+    }
+
+    public Map<String, Object> deleteData(String id, String dataType) {
+        Map<String, Object> map = new HashMap<>();
+
+        switch (dataType) {
+            case "LINK":
+                Optional<LinkEntity> linkEntity = linkRepository.findById(id);
+                if (linkEntity.isPresent()) {
+                    linkEntity.get().setUSE_YN("N");
+                    linkRepository.save(linkEntity.get());
+                }
+                break;
+            case "NODE":
+                Optional<NodeEntity> nodeEntity = nodeRepository.findById(id);
+                if (nodeEntity.isPresent()) {
+                    nodeEntity.get().setUSE_YN("N");
+                    nodeRepository.save(nodeEntity.get());
+                }
+                break;
+        }
+
+        return map;
+    }
+
+    public void updateGeometry() {
+        int updateRows = networkDAO.updateGeometry();
+        System.out.println("updateRows: " + updateRows);
     }
 }

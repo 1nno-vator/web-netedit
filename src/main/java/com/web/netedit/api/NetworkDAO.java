@@ -50,4 +50,12 @@ public class NetworkDAO {
         return sqlSessionTemplate.selectList(NAMESPACE + queryId);
     }
 
+    public int updateGeometry() {
+        String queryId = "updateLinkGeometry";
+        int linkUpdateRows = sqlSessionTemplate.update(NAMESPACE + queryId);
+        queryId = "updateNodeGeometry";
+        int nodeUpdateRows = sqlSessionTemplate.update(NAMESPACE + queryId);
+        return linkUpdateRows + nodeUpdateRows;
+    }
+
 }
