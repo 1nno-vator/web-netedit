@@ -14,6 +14,7 @@ import { Vector as VectorLayer} from 'ol/layer';
 import { Icon, Circle as CircleStyle, Fill, Stroke, Style, RegularShape } from 'ol/style';
 import Point from 'ol/geom/Point';
 import MultiPoint from 'ol/geom/MultiPoint';
+import { platformModifierKeyOnly } from 'ol/events/condition';
 // import { Point, MultiPoint, LineString, Polygon } from 'ol/geom';
 
 import BlueArrowImg from '../data/resize_blue_arrow.png';
@@ -375,6 +376,7 @@ function domEventRegister() {
   })
 
   document.getElementById('SAVE_BTN').addEventListener('click', (e) => {
+    console.log('나 불림');
     applyData();
   })
 
@@ -397,12 +399,6 @@ function domEventRegister() {
     if (e.shiftKey && state.mode === "MODIFY") {
       map.removeInteraction(modify);
       addSplitInteraction();
-    }
-
-    if (!e.shiftKey && !e.altKey && e.ctrlKey && e.key === 's') {
-      if (DATA_REPO.length > 0) {
-        document.getElementById('SAVE_BTN').click();
-      }
     }
 
   });
@@ -491,7 +487,8 @@ function initMap() {
       common._baseMapInfoLayer,
       layer
     ],
-    view: common._mainMapView
+    view: common._mainMapView,
+    loadTilesWhileAnimating: true
   });
 
   map.on('pointermove', function(e) {
@@ -625,6 +622,7 @@ function removeAllInteraction() {
 
 function unselectAllFeature() {
   targetFeature = null;
+  select.getFeatures().clear();
   LINK_GRID_INSTANCE.resetData([]);
   FROM_NODE_GRID_INSTANCE.resetData([]);
   TO_NODE_GRID_INSTANCE.resetData([]);
@@ -642,12 +640,15 @@ function addSelectInteraction() {
       }
 
     },
+    multi: true,
     style: styleFunction
   })
 
   select.getFeatures().on(
     "add",
     function (e) {
+
+      const selectFeatures = select.getFeatures();
 
       if (targetFeature) {
         const lgdata = convertObject(LINK_GRID_INSTANCE.getData());
@@ -718,6 +719,9 @@ function addSelectInteraction() {
 
       }
 
+      if (!e.element) {
+        return;
+      }
       targetFeature = e.element;
 
       if (state.mode === 'SELECT') {
@@ -1775,10 +1779,102 @@ function applyData() {
       ...targetFeature.getProperties(), ...dataTemplate.LINK_DATA_REPO
     })
 
-    saveData("XXX")
+    // zone
+    const fromNode = targetFeature.get("UP_FROM_NODE");
+    const toNode = targetFeature.get("UP_TO_NODE");
+
+    let nowDisplayExtent = getExtent();
+    let nowDisplayFeatures = source.getFeaturesInExtent(nowDisplayExtent).filter(v => {
+      // return v.getId() !== targetFeature.getId() && ((v.get("UP_FROM_NODE") === fromNode || v.get("UP_TO_NODE") === toNode) || (v.get("UP_TO_NODE") === fromNode || v.get("UP_TO_NODE") === toNode))
+      return ((v.get("UP_FROM_NODE") === fromNode || v.get("UP_TO_NODE") === toNode) || (v.get("UP_TO_NODE") === fromNode || v.get("UP_TO_NODE") === toNode))
+    });
+
+    let selectTarget = [...nowDisplayFeatures];
+    let selectedFeatures = [];
+
+    let iter = 0;
+
+    let ITER_MAP = {};
+    selectTarget.forEach((v => {
+
+      const key = v.getId();
+      ITER_MAP[key] = false;
+
+    }))
+
+    console.log(ITER_MAP);
+
+    let intervalFunction = setInterval(() => {
+
+      if (checkInRepo(ITER_MAP) === "ALL_IN_REPO") {
+        console.log(checkInRepo(ITER_MAP));
+        return clearInterval(intervalFunction);
+      }
+
+      let tf = selectTarget.find(v => {
+        return v.getId() === checkInRepo(ITER_MAP)
+      });
+
+      unselectAllFeature();
+      select.getFeatures().push(tf);
+
+      console.log(ITER_MAP);
+      console.log(checkInRepo(ITER_MAP));
+
+    }, 150)
+
+    // let intervalFunction = setInterval(() => {
+    //
+    //   if (iter === selectTarget.length) {
+    //     console.log(checkInRepo(ITER_MAP));
+    //     return clearInterval(intervalFunction);
+    //   }
+    //
+    //   let tf = selectTarget[iter];
+    //   unselectAllFeature();
+    //   select.getFeatures().push(tf);
+    //
+    //   let checkSecondLinkRepo = DATA_REPO.some(v => {
+    //     return v.REPO_ID === tf.getId()
+    //   });
+    //
+    //   if (checkSecondLinkRepo) {
+    //     iter++;
+    //   } else {
+    //
+    //     if (iter === selectTarget.length) {
+    //       console.log(checkInRepo(ITER_MAP));
+    //       return clearInterval(intervalFunction);
+    //     }
+    //
+    //   }
+    //
+    // }, 1000)
+
+
+
+
+
+    // saveData("XXX")
   }
 
 
+}
+
+function checkInRepo(_map) {
+  let checkResult = "ALL_IN_REPO";
+
+  for(let key in _map){
+    let checkSecondLinkRepo = DATA_REPO.some(v => {
+      return v.REPO_ID === key
+    });
+
+    if (!checkSecondLinkRepo) {
+      checkResult = key
+    }
+  }
+
+  return checkResult;
 }
 
 function saveData(_dataType) {

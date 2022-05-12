@@ -51,6 +51,7 @@
                             )
             </otherwise>
         </choose>
+        AND LINK_ID IN ('475640653','475645760','475646570')
 
     </select>
 
