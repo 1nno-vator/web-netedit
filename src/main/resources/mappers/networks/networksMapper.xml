@@ -143,6 +143,28 @@
                     )
     </select>
 
+    <select id="getSingleLink" resultType="HashMap" parameterType="HashMap">
+        SELECT
+            LINK_ID
+            , UP_FROM_NODE
+            , UP_TO_NODE
+            , UP_LANES
+            , DOWN_FROM_NODE
+            , DOWN_TO_NODE
+            , DOWN_LANES
+            , ROAD_NAME
+            , EDIT_TY
+            , FIRST_DO
+            , FIRST_GU
+            , LEFT_TURN_TYPE
+            , EX_POCKET
+            , IS_CHANGE_LANES
+            , WKT
+            , USE_YN
+        FROM NETEDIT_MS_LINK_2020
+        WHERE LINK_ID = #{FEATURE_ID}
+    </select>
+
     <update id="updateLinkGeometry">
         UPDATE NETEDIT_MS_LINK_2020
         SET GEOM = ST_GEOMETRYFROMTEXT(WKT)

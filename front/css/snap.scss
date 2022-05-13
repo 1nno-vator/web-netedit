@@ -81,3 +81,18 @@
     }
 
 }
+
+.search-zone {
+    position: absolute;
+    right: 5px;
+    height: 25px;
+
+    input {
+        height: 25px;
+    }
+
+    button {
+        padding: 3px;
+    }
+
+}

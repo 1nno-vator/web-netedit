@@ -134,4 +134,10 @@ public class NetworkController {
         resultMap.put("NODE_DATA", networkService.getNodeByLink(wkt, sggCode));
         return resultMap;
     }
+
+    @RequestMapping(value = "/singleLink", method = RequestMethod.POST)
+    public Map<String, Object> getSingleLink(@RequestBody Map paramMap) {
+        String featureId = (String) paramMap.get("featureId");
+        return networkService.getSingleLink(featureId);
+    }
 }

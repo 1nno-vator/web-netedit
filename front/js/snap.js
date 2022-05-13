@@ -17,8 +17,10 @@ import Point from 'ol/geom/Point';
 import MultiPoint from 'ol/geom/MultiPoint';
 import { platformModifierKeyOnly } from 'ol/events/condition';
 
-import BlueArrowImg from '../data/resize_blue_arrow.png';
-import NormalArrowImg from '../data/resize_normal_arrow.png';
+// import BlueArrowImg from '../data/resize_blue_arrow.png';
+// import NormalArrowImg from '../data/resize_normal_arrow.png';
+import BlueArrowImg from '../data/resize_pink_arrow.png';
+import NormalArrowImg from '../data/resize_yellow_arrow.png';
 
 import UndoRedo from 'ol-ext/interaction/UndoRedo'
 import { fromExtent } from 'ol/geom/Polygon';
@@ -53,8 +55,8 @@ const styleFunction = function (feature) {
     // linestring
     new Style({
       stroke: new Stroke({
-        color: selectedFeaturesId.includes(feature.getId()) ? '#0000ff' : '#ffcc33',
-        width: 4,
+        color: selectedFeaturesId.includes(feature.getId()) ? '#FFB2F5' : '#FFE400',
+        width: selectedFeaturesId.includes(feature.getId()) ? 5 : 4,
       }),
       text: new Text({
         font: '8px Verdana',
@@ -78,7 +80,7 @@ const styleFunction = function (feature) {
         geometry: new Point(to),
         image: new Icon({
           src: selectedFeaturesId.includes(feature.getId())  ? BlueArrowImg : NormalArrowImg,
-          color: selectedFeaturesId.includes(feature.getId())  ? '#0000ff' : '#ffcc33',
+          // color: selectedFeaturesId.includes(feature.getId()) ? '#FFB2F5' : '#FFE400',
           anchor: [0.75, 0.5],
           opacity: getZoomLevel() > 16 ? 1 : 0,
           scale: [1.5, 1.5],
@@ -104,7 +106,7 @@ const styleFunction = function (feature) {
               geometry: new Point(end),
               image: new Icon({
                 src: selectedFeaturesId.includes(feature.getId())  ? BlueArrowImg : NormalArrowImg,
-                color: selectedFeaturesId.includes(feature.getId()) ? '#0000ff' : '#ffcc33',
+                // color: selectedFeaturesId.includes(feature.getId()) ? '#0000ff' : '#ffcc33',
                 opacity: getZoomLevel() > 16 ? 1 : 0,
                 anchor: [0.75, 0.5],
                 rotateWithView: true,
@@ -121,7 +123,7 @@ const styleFunction = function (feature) {
         radius: 6,
         points:6,
         fill: new Fill({
-          color: '#f00'
+          color: '#0100FF'
         })
       }),
       zIndex: 999,
@@ -133,7 +135,7 @@ const styleFunction = function (feature) {
         radius: 6,
         points:6,
         fill: new Fill({
-          color: '#f00'
+          color: '#0100FF'
         })
       }),
       zIndex: 999,
@@ -154,7 +156,7 @@ const rcLineStyleFunction = function (feature) {
     // linestring
     new Style({
       stroke: new Stroke({
-        color: 'rgba(110, 170, 255, 0.8)',
+        color: 'rgba(95, 0, 255, 0.8)',
         width: 4,
       }),
       zIndex: 100
@@ -171,10 +173,10 @@ const rcLineStyleFunction = function (feature) {
     geometry.forEachSegment(function (start, end) {
       let regularShapeStyle = new Style({
         image: new RegularShape({
-          radius: 4,
-          points:4,
+          radius: 5,
+          points:5,
           fill: new Fill({
-            color: 'rgba(240, 105, 255, 0.7)'
+            color: 'rgba(0, 183, 0, 0.7)'
           })
         }),
         zIndex: 100,
@@ -186,10 +188,10 @@ const rcLineStyleFunction = function (feature) {
   } else if (getZoomLevel() > 18) {
     let fromToRegularShapeStyle = new Style({
       image: new RegularShape({
-        radius: 4,
-        points:4,
+        radius: 5,
+        points:5,
         fill: new Fill({
-          color: 'rgba(240, 105, 255, 0.7)'
+          color: 'rgba(0, 183, 0, 0.7)'
         })
       }),
       zIndex: 100,
@@ -203,10 +205,10 @@ const rcLineStyleFunction = function (feature) {
       if(segCount % 3 === 0) {
         let regularShapeStyle = new Style({
           image: new RegularShape({
-            radius: 4,
-            points:4,
+            radius: 5,
+            points:5,
             fill: new Fill({
-              color: 'rgba(240, 105, 255, 0.7)'
+              color: 'rgba(0, 183, 0, 0.7)'
             })
           }),
           zIndex: 100,
@@ -277,6 +279,11 @@ function domEventRegister() {
 
     document.getElementById('SAVE_BTN').addEventListener('click', (e) => {
         applyData();
+    })
+
+    document.getElementById('search-feature-btn').addEventListener('click', (e) => {
+        const inputText = document.getElementById('search-feature').value;
+        getSingleLink(inputText);
     })
 
     // Use Array.forEach to add an event listener to each checkbox.
@@ -527,6 +534,34 @@ function addDrawBoxInteraction() {
     map.addInteraction(dragBox);
 }
 //
+
+function getSingleLink(_featureId) {
+    axios.post(`${common.API_PATH}/api/singleLink`, {
+        featureId: _featureId
+    })
+    .then(({ data }) => {
+
+        if (data) {
+            const format = new WKT();
+            let _feature = format.readFeature(data.wkt,  {
+              dataProjection: 'EPSG:4326',
+              featureProjection: 'EPSG:4326'
+            });
+
+            const centerCoords = _feature.getGeometry().getCoordinateAt(0.5);
+
+            map.getView().setZoom(17);
+            map.getView().setCenter(centerCoords);
+        } else {
+            alert('데이터가 없습니다.');
+        }
+
+
+    })
+    .catch((e) => {
+        alert('데이터가 없거나 오류가 발생했습니다.');
+    })
+}
 
 function getFeaturesByZone(_displayZoneWKT) {
   axios.post(`${common.API_PATH}/api/linkByZoneWithNodeData`, {

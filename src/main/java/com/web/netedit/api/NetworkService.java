@@ -145,6 +145,12 @@ public class NetworkService {
         return map;
     }
 
+    public Map<String, Object> getSingleLink(String featureId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("FEATURE_ID", featureId);
+        return networkDAO.getSingleLink(map);
+    }
+
     public void updateGeometry() {
         int updateRows = networkDAO.updateGeometry();
         System.out.println("updateRows: " + updateRows);

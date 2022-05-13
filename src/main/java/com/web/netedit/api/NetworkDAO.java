@@ -55,6 +55,11 @@ public class NetworkDAO {
         return sqlSessionTemplate.selectList(NAMESPACE + queryId);
     }
 
+    public Map<String, Object> getSingleLink(Map map) {
+        String queryId = "getSingleLink";
+        return sqlSessionTemplate.selectOne(NAMESPACE + queryId, map);
+    }
+
     public int updateGeometry() {
         String queryId = "updateLinkGeometry";
         int linkUpdateRows = sqlSessionTemplate.update(NAMESPACE + queryId);
