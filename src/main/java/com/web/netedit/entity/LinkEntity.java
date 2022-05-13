@@ -28,6 +28,8 @@ public class LinkEntity {
     private String DOWN_TO_NODE;
     private String DOWN_LANES;
 
+    private String EDIT_TY;
+
     private String ROAD_NAME;
     private String FIRST_DO;
     private String FIRST_GU;
@@ -46,6 +48,8 @@ public class LinkEntity {
         this.DOWN_FROM_NODE = _linkEntity.DOWN_FROM_NODE;
         this.DOWN_TO_NODE = _linkEntity.DOWN_TO_NODE;
         this.DOWN_LANES = _linkEntity.DOWN_LANES;
+
+        this.EDIT_TY = _linkEntity.EDIT_TY;
 
         this.ROAD_NAME = _linkEntity.ROAD_NAME;
         this.FIRST_DO = _linkEntity.FIRST_DO;

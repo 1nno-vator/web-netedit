@@ -33,12 +33,20 @@ public class NetworkService {
         return networkDAO.getLink();
     }
 
-    public List<Map<String, Object>> getLinkByZone(String wkt, String sggCode) {
+    public List<Map<String, Object>> getLinkByZone(String wkt, List<String> sggCode) {
         Map<String, Object> map = new HashMap<>();
         System.out.println(wkt);
         map.put("WKT", wkt);
         map.put("SGG_CODE", sggCode);
         return networkDAO.getLinkByZone(map);
+    }
+
+    public List<Map<String, Object>> getNodeByLink(String wkt, List<String> sggCode) {
+        Map<String, Object> map = new HashMap<>();
+        System.out.println(wkt);
+        map.put("WKT", wkt);
+        map.put("SGG_CODE", sggCode);
+        return networkDAO.getNodeByZone(map);
     }
 
     public List<Map<String, Object>> getNode(String _fromNode, String _toNode) {
@@ -50,9 +58,10 @@ public class NetworkService {
         return networkDAO.getNode(map);
     }
 
-    public List<Map<String, Object>> getRcline(String wkt) {
+    public List<Map<String, Object>> getRcline(String wkt, List<String> sggCode) {
         Map<String, Object> map = new HashMap<>();
         map.put("WKT", wkt);
+        map.put("SGG_CODE", sggCode);
         return networkDAO.getRcline(map);
     }
 

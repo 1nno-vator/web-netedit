@@ -35,6 +35,11 @@ public class NetworkDAO {
         return sqlSessionTemplate.selectList(NAMESPACE + queryId, map);
     }
 
+    public List<Map<String, Object>> getNodeByZone(Map map) {
+        String queryId = "getNodeByZone";
+        return sqlSessionTemplate.selectList(NAMESPACE + queryId, map);
+    }
+
     public List<Map<String, Object>> getNode(Map map) {
         String queryId = "getNode";
         return sqlSessionTemplate.selectList(NAMESPACE + queryId, map);

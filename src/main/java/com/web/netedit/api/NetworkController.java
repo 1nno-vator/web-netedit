@@ -40,14 +40,16 @@ public class NetworkController {
     @RequestMapping(value = "/linkByZone", method = RequestMethod.POST)
     public List<Map<String, Object>> getLinkByZone(@RequestBody Map paramMap) {
         String wkt = (String) paramMap.get("wkt");
-        String sggCode = (String) paramMap.get("sggCode");
+        List<String> sggCode = (List<String>) paramMap.get("sggCode");
+        System.out.println(sggCode);
         return networkService.getLinkByZone(wkt, sggCode);
     }
 
     @RequestMapping(value = "/getRcline", method = RequestMethod.POST)
     public List<Map<String, Object>> getRcline(@RequestBody Map paramMap) {
         String wkt = (String) paramMap.get("wkt");
-        return networkService.getRcline(wkt);
+        List<String> sggCode = (List<String>) paramMap.get("sggCode");
+        return networkService.getRcline(wkt, sggCode);
     }
 
     @RequestMapping(value = "/node", method = RequestMethod.POST)
@@ -120,4 +122,16 @@ public class NetworkController {
         return networkService.deleteData(id, dataType);
     }
 
+    // after 0512
+
+    @RequestMapping(value = "/linkByZoneWithNodeData", method = RequestMethod.POST)
+    public Map<String, Object> getLinkByZoneWithNodeData(@RequestBody Map paramMap) {
+        String wkt = (String) paramMap.get("wkt");
+        List<String> sggCode = (List<String>) paramMap.get("sggCode");
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("LINK_DATA", networkService.getLinkByZone(wkt, sggCode));
+        resultMap.put("NODE_DATA", networkService.getNodeByLink(wkt, sggCode));
+        return resultMap;
+    }
 }

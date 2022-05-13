@@ -16,6 +16,7 @@
             , UP_TO_NODE
             , DOWN_FROM_NODE
             , DOWN_TO_NODE
+            , EIDT_TY
             , WKT
         FROM NETEDIT_MS_LINK_2020
     </select>
@@ -31,6 +32,7 @@
         	, DOWN_TO_NODE
         	, DOWN_LANES
         	, ROAD_NAME
+            , EDIT_TY
         	, FIRST_DO
         	, FIRST_GU
         	, LEFT_TURN_TYPE
@@ -41,18 +43,71 @@
         FROM NETEDIT_MS_LINK_2020
         WHERE 1=1
         <choose>
-            <when test='!SGG_CODE.equals("none")'>
-                AND FIRST_GU = #{SGG_CODE}
+            <when test="SGG_CODE !=null and SGG_CODE.size != 0">
+                AND FIRST_GU IN
+                <foreach item="item" index="index" collection="SGG_CODE"
+                      open="(" separator="," close=")">
+                        #{item}
+                </foreach>
             </when>
             <otherwise>
-                AND ST_Covers(
+                AND ST_Intersects(
                                 ST_GeometryFromText(#{WKT}),
                                 GEOM
                             )
             </otherwise>
         </choose>
-        AND LINK_ID IN ('475640653','475645760','475646570')
 
+    </select>
+
+    <select id="getNodeByZone" parameterType="HashMap" resultType="HashMap">
+
+        SELECT NODE_ID, NODE_TYPE, TRAFFIC_LIGHT, NODE_NAME, DISTRICT_ID, DISTRICT_ID2, WKT, USE_YN
+        FROM NETEDIT_MS_NODE_2020
+        WHERE NODE_ID IN
+        (
+            SELECT
+                UP_FROM_NODE
+            FROM NETEDIT_MS_LINK_2020
+            WHERE 1=1
+            <choose>
+                <when test="SGG_CODE !=null and SGG_CODE.size != 0">
+                    AND FIRST_GU IN
+                    <foreach item="item" index="index" collection="SGG_CODE"
+                          open="(" separator="," close=")">
+                            #{item}
+                    </foreach>
+                </when>
+                    <otherwise>
+                        AND ST_Intersects(
+                                        ST_GeometryFromText(#{WKT}),
+                                        GEOM
+                                    )
+                    </otherwise>
+                </choose>
+
+            UNION ALL
+
+            SELECT
+                UP_TO_NODE
+            FROM NETEDIT_MS_LINK_2020
+            WHERE 1=1
+            <choose>
+                <when test="SGG_CODE !=null and SGG_CODE.size != 0">
+                    AND FIRST_GU IN
+                    <foreach item="item" index="index" collection="SGG_CODE"
+                          open="(" separator="," close=")">
+                            #{item}
+                    </foreach>
+                </when>
+                    <otherwise>
+                        AND ST_Intersects(
+                                        ST_GeometryFromText(#{WKT}),
+                                        GEOM
+                                    )
+                    </otherwise>
+                </choose>
+        )
     </select>
 
     <select id="getNode" resultType="HashMap">
@@ -81,10 +136,11 @@
     <select id="getRcline" resultType="HashMap">
         SELECT UFID, WKT
         FROM NETEDIT_MS_RCLINE
-        WHERE ST_Covers(
-            ST_GeometryFromText(#{WKT}),
-            GEOM
-        )
+        WHERE 1=1
+        AND ST_Intersects(
+                        ST_GeometryFromText(#{WKT}),
+                        GEOM
+                    )
     </select>
 
     <update id="updateLinkGeometry">
