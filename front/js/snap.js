@@ -12,7 +12,7 @@ import Collection from 'ol/Collection'
 import { DragBox, Modify, Snap, Select } from 'ol/interaction';
 import { Vector as VectorSource } from 'ol/source';
 import { Vector as VectorLayer} from 'ol/layer';
-import { Icon, Text, Fill, Stroke, Style, RegularShape } from 'ol/style';
+import { Icon, Text, Fill, Circle as CircleStyle, Stroke, Style, RegularShape } from 'ol/style';
 import Point from 'ol/geom/Point';
 import MultiPoint from 'ol/geom/MultiPoint';
 import { platformModifierKeyOnly } from 'ol/events/condition';
@@ -39,6 +39,21 @@ const source = new VectorSource({
 });
 const layer = new VectorLayer({
   source: source
+});
+
+const smSource = new VectorSource({
+  features: new Collection(),
+  wrapX: false
+});
+const smLayer = new VectorLayer({
+  source: smSource,
+    style: new Style({
+        image: new CircleStyle({
+              radius: 13,
+              fill: new Fill({color: 'rgba(255, 0, 0, 0.6)'})
+          }),
+        zIndex: 999,
+      })
 });
 
 let displayZoneFeature = null;
@@ -164,9 +179,22 @@ const rcLineStyleFunction = function (feature) {
   ];
 
   let from = geometry.getFirstCoordinate();
-  let to = geometry.getLastCoordinate();
+  let tt = geometry.getLastCoordinate();
 
   let segCount = 0;
+
+    let fromToRegularShapeStyle = new Style({
+        image: new RegularShape({
+          radius: 5,
+          points:5,
+          fill: new Fill({
+            color: 'rgba(0, 183, 0, 0.7)'
+          })
+        }),
+        zIndex: 100,
+        geometry: new MultiPoint([from, tt])
+      })
+      styles.push(fromToRegularShapeStyle);
 
   if (getZoomLevel() > 20) {
 
@@ -186,18 +214,6 @@ const rcLineStyleFunction = function (feature) {
     });
 
   } else if (getZoomLevel() > 18) {
-    let fromToRegularShapeStyle = new Style({
-      image: new RegularShape({
-        radius: 5,
-        points:5,
-        fill: new Fill({
-          color: 'rgba(0, 183, 0, 0.7)'
-        })
-      }),
-      zIndex: 100,
-      geometry: new MultiPoint(from, to)
-    })
-    styles.push(fromToRegularShapeStyle);
 
     geometry.forEachSegment(function (start, end) {
 
@@ -258,6 +274,8 @@ const DEFAULT_COLUMN = [
 document.addEventListener('DOMContentLoaded', function() {
     initMap();
     initGrid();
+
+    getSmInter();
 
     addSelectInteraction();
     addModifyInteraction();
@@ -322,6 +340,7 @@ function initMap() {
         layers: [
           common._baseMapLayer,
           common._baseMapInfoLayer,
+          smLayer,
           layer
         ],
         view: common._mainMapView,
@@ -534,6 +553,27 @@ function addDrawBoxInteraction() {
     map.addInteraction(dragBox);
 }
 //
+
+function getSmInter() {
+    axios.get(`${common.API_PATH}/api/smInter`)
+      .then(({ data }) => {
+
+        for (let i=0; i<data.length; i++) {
+            const d = data[i];
+            const format = new WKT();
+            let _feature = format.readFeature(d.wkt,  {
+              dataProjection: 'EPSG:4326',
+              featureProjection: 'EPSG:4326'
+            });
+            smSource.addFeature(_feature);
+        }
+
+
+      })
+      .catch((e) => {
+          console.log(e)
+      })
+}
 
 function getSingleLink(_featureId) {
     axios.post(`${common.API_PATH}/api/singleLink`, {

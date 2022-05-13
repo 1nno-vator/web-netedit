@@ -165,6 +165,11 @@
         WHERE LINK_ID = #{FEATURE_ID}
     </select>
 
+    <select id="getSmInter" parameterType="HashMap" resultType="HashMap">
+        SELECT WKT
+        FROM NETEDIT_MS_SM_INTER
+    </select>
+
     <update id="updateLinkGeometry">
         UPDATE NETEDIT_MS_LINK_2020
         SET GEOM = ST_GEOMETRYFROMTEXT(WKT)

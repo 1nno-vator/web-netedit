@@ -140,4 +140,9 @@ public class NetworkController {
         String featureId = (String) paramMap.get("featureId");
         return networkService.getSingleLink(featureId);
     }
+
+    @RequestMapping(value = "/smInter", method = RequestMethod.GET)
+    public List<Map<String, Object>> getSmInter() {
+        return networkService.getSmInter();
+    }
 }

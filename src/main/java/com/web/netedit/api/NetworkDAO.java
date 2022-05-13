@@ -60,6 +60,11 @@ public class NetworkDAO {
         return sqlSessionTemplate.selectOne(NAMESPACE + queryId, map);
     }
 
+    public List<Map<String, Object>> getSmInter() {
+        String queryId = "getSmInter";
+        return sqlSessionTemplate.selectList(NAMESPACE + queryId);
+    }
+
     public int updateGeometry() {
         String queryId = "updateLinkGeometry";
         int linkUpdateRows = sqlSessionTemplate.update(NAMESPACE + queryId);

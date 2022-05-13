@@ -151,6 +151,10 @@ public class NetworkService {
         return networkDAO.getSingleLink(map);
     }
 
+    public List<Map<String, Object>> getSmInter() {
+        return networkDAO.getSmInter();
+    }
+
     public void updateGeometry() {
         int updateRows = networkDAO.updateGeometry();
         System.out.println("updateRows: " + updateRows);
