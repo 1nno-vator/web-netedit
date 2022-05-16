@@ -489,28 +489,7 @@ function addModifyInteraction() {
 
     modify.on('modifyend', function(e) {
 
-        const selectedFeatures = select.getFeatures();
-
-        selectedFeatures.forEach(function(_f) {
-            const wkt = new WKT();
-            const NEW_LINK_WKT = wkt.writeGeometry(_f.getGeometry()).replace("(", " (").replace(",",", ");
-            const NEW_FROM_NODE_WKT = wkt.writeGeometry(new Point(_f.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ");
-            const NEW_TO_NODE_WKT = wkt.writeGeometry(new Point(_f.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ");
-
-            _f.set("WKT", NEW_LINK_WKT);
-
-            const LINK_DATA_REPO = _f.get("LINK_DATA_REPO");
-            const FROM_NODE_DATA_REPO = LINK_DATA_REPO.FROM_NODE_DATA_REPO;
-            const TO_NODE_DATA_REPO = LINK_DATA_REPO.TO_NODE_DATA_REPO;
-
-            LINK_DATA_REPO.WKT = NEW_LINK_WKT;
-            FROM_NODE_DATA_REPO.WKT = NEW_FROM_NODE_WKT;
-            TO_NODE_DATA_REPO.WKT = NEW_TO_NODE_WKT;
-
-            _f.set("LINK_DATA_REPO", LINK_DATA_REPO);
-            _f.set("FROM_NODE_DATA_REPO", FROM_NODE_DATA_REPO);
-            _f.set("TO_NODE_DATA_REPO", TO_NODE_DATA_REPO);
-        })
+        wktUpdate();
 
 
     })
@@ -845,6 +824,8 @@ function getGridData(_data, _dataType) {
 
 function applyData() {
 
+    wktUpdate();
+
     const urlPrefix = `${common.API_PATH}/api`;
 
     const DATA_REPO = saveDataArchive.map(v => {
@@ -939,4 +920,29 @@ function getCheckValue() {
     });
 
     return checkedValueArray;
+}
+
+function wktUpdate() {
+    const selectedFeatures = select.getFeatures();
+
+    selectedFeatures.forEach(function(_f) {
+        const wkt = new WKT();
+        const NEW_LINK_WKT = wkt.writeGeometry(_f.getGeometry()).replace("(", " (").replace(",",", ");
+        const NEW_FROM_NODE_WKT = wkt.writeGeometry(new Point(_f.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ");
+        const NEW_TO_NODE_WKT = wkt.writeGeometry(new Point(_f.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ");
+
+        _f.set("WKT", NEW_LINK_WKT);
+
+        const LINK_DATA_REPO = _f.get("LINK_DATA_REPO");
+        const FROM_NODE_DATA_REPO = LINK_DATA_REPO.FROM_NODE_DATA_REPO;
+        const TO_NODE_DATA_REPO = LINK_DATA_REPO.TO_NODE_DATA_REPO;
+
+        LINK_DATA_REPO.WKT = NEW_LINK_WKT;
+        FROM_NODE_DATA_REPO.WKT = NEW_FROM_NODE_WKT;
+        TO_NODE_DATA_REPO.WKT = NEW_TO_NODE_WKT;
+
+        _f.set("LINK_DATA_REPO", LINK_DATA_REPO);
+        _f.set("FROM_NODE_DATA_REPO", FROM_NODE_DATA_REPO);
+        _f.set("TO_NODE_DATA_REPO", TO_NODE_DATA_REPO);
+    })
 }
