@@ -86,4 +86,17 @@
   padding: 3px;
 }
 
+.control-btn-zone {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  justify-content: center;
+  align-content: center;
+  left: 5px;
+}
+.control-btn-zone button {
+  padding: 5px 25px;
+}
+
 /*# sourceMappingURL=snap.css.map */

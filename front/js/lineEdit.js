@@ -9,11 +9,13 @@ import 'ol-layerswitcher/dist/ol-layerswitcher.css';
 import 'tui-grid/dist/tui-grid.css'
 import { Feature, Map } from 'ol';
 import Collection from 'ol/Collection'
-import { DragBox, Modify, Snap, Select } from 'ol/interaction';
+import {DragBox, Modify, Snap, Select, Draw} from 'ol/interaction';
 import { Vector as VectorSource } from 'ol/source';
 import { Vector as VectorLayer} from 'ol/layer';
 import { Icon, Text, Fill, Circle as CircleStyle, Stroke, Style, RegularShape } from 'ol/style';
 import Point from 'ol/geom/Point';
+import Circle from 'ol/geom/Circle';
+import { buffer } from 'ol/extent';
 import MultiPoint from 'ol/geom/MultiPoint';
 import { platformModifierKeyOnly } from 'ol/events/condition';
 
@@ -26,12 +28,20 @@ import UndoRedo from 'ol-ext/interaction/UndoRedo'
 import { fromExtent } from 'ol/geom/Polygon';
 import WKT from 'ol/format/WKT';
 import Grid from "tui-grid";
+import {Polygon} from "ol/geom";
 
 // global value
 let LINK_DATA = null;
 let NODE_DATA = null;
 
+let CIRCLE_RADIUS = 0.0000005;
+
 let map = null;
+
+const tempNodeSource = new VectorSource();
+const tempLayer = new VectorLayer({
+  source: tempNodeSource
+});
 
 const source = new VectorSource({
   features: new Collection(),
@@ -59,6 +69,16 @@ const smLayer = new VectorLayer({
 let displayZoneFeature = null;
 
 let saveDataArchive = [];
+
+const testStyle = function (feature) {
+    return new Style({
+        image: new CircleStyle({
+              radius: 13,
+              fill: new Fill({color: 'rgba(255, 0, 0, 0.6)'})
+          }),
+        zIndex: 999,
+      })
+}
 
 const styleFunction = function (feature) {
   const props = feature.getProperties();
@@ -164,90 +184,12 @@ const styleFunction = function (feature) {
   return styles;
 };
 
-const rcLineStyleFunction = function (feature) {
-  const props = feature.getProperties();
-  const geometry = feature.getGeometry();
-  const styles = [
-    // linestring
-    new Style({
-      stroke: new Stroke({
-        color: 'rgba(95, 0, 255, 0.8)',
-        width: 4,
-      }),
-      zIndex: 100
-    }),
-  ];
-
-  let from = geometry.getFirstCoordinate();
-  let tt = geometry.getLastCoordinate();
-
-  let segCount = 0;
-
-    let fromToRegularShapeStyle = new Style({
-        image: new RegularShape({
-          radius: 5,
-          points:5,
-          fill: new Fill({
-            color: 'rgba(0, 183, 0, 0.7)'
-          })
-        }),
-        zIndex: 100,
-        geometry: new MultiPoint([from, tt])
-      })
-      styles.push(fromToRegularShapeStyle);
-
-  if (getZoomLevel() > 20) {
-
-    geometry.forEachSegment(function (start, end) {
-      let regularShapeStyle = new Style({
-        image: new RegularShape({
-          radius: 5,
-          points:5,
-          fill: new Fill({
-            color: 'rgba(0, 183, 0, 0.7)'
-          })
-        }),
-        zIndex: 100,
-        geometry: new MultiPoint(start, end)
-      })
-      styles.push(regularShapeStyle);
-    });
-
-  } else if (getZoomLevel() > 18) {
-
-    geometry.forEachSegment(function (start, end) {
-
-      segCount++;
-      if(segCount % 3 === 0) {
-        let regularShapeStyle = new Style({
-          image: new RegularShape({
-            radius: 5,
-            points:5,
-            fill: new Fill({
-              color: 'rgba(0, 183, 0, 0.7)'
-            })
-          }),
-          zIndex: 100,
-          geometry: new MultiPoint(start, end)
-        })
-        styles.push(regularShapeStyle);
-      }
-
-    });
-
-  } else {
-
-  }
-
-  return styles;
-};
-
 let SHOW_USE_YN = 'Y';
 
 let targetFeature = null;
 
 // interactionValue
-let select, snap, modify, undoInteraction;
+let select, snap, modify, undoInteraction, draw, drawModify;
 //
 
 // grid value
@@ -278,10 +220,11 @@ document.addEventListener('DOMContentLoaded', function() {
     getSmInter();
 
     addSelectInteraction();
-    addModifyInteraction();
-    addSnapInteraction();
-    addUndoInteraction();
     addDrawBoxInteraction();
+    addUndoInteraction();
+    addModifyInteraction();
+    addDrawInteraction();
+    addSnapInteraction();
 
     domEventRegister();
 })
@@ -311,6 +254,15 @@ function domEventRegister() {
       })
     });
 
+    Hotkeys('ctrl+q', function(event, handler) {
+        // Prevent the default refresh event under WINDOWS system
+        event.preventDefault()
+    })
+
+    Hotkeys('ctrl+w', function(event, handler) {
+        // Prevent the default refresh event under WINDOWS system
+        event.preventDefault()
+    })
 
     Hotkeys('ctrl+s', function(event, handler) {
         // Prevent the default refresh event under WINDOWS system
@@ -341,7 +293,8 @@ function initMap() {
           common._baseMapLayer,
           common._baseMapInfoLayer,
           smLayer,
-          layer
+          layer,
+            tempLayer
         ],
         view: common._mainMapView,
         loadTilesWhileAnimating: true
@@ -378,7 +331,6 @@ function initMap() {
             if (getCheckValue().length === 0) {
                 getFeaturesByZone(wkt);
             }
-            getRcLineByZone(wkt);
         }
     })
 
@@ -482,16 +434,14 @@ function addSelectInteraction() {
 
 function addModifyInteraction() {
     modify = new Modify({
-        features: select.getFeatures(),
+        // features: select.getFeatures(),
+        source: source,
         pixelTolerance: 15,
         wrapX: false
     });
 
     modify.on('modifyend', function(e) {
-
         wktUpdate();
-
-
     })
 
     map.addInteraction(modify);
@@ -527,11 +477,161 @@ function addDrawBoxInteraction() {
       const extent = dragBox.getGeometry().getExtent();
       const boxFeatures = source.getFeaturesInExtent(extent).filter((feature) => feature.getGeometry().intersectsExtent(extent));
       selectedFeatures.extend(boxFeatures);
-      wktUpdate();
     });
 
     map.addInteraction(dragBox);
 }
+
+function addDrawInteraction() {
+    draw = new Draw({
+        source: source,
+        type: "LineString"
+    });
+
+    draw.on('drawstart', function(e) {
+        console.log('draw start');
+
+        e.feature.setStyle(styleFunction);
+        tempNodeSource.clear();
+    })
+
+    draw.on('drawend', function(e) {
+
+        const drawFeature = e.feature;
+
+        const wktFormat = new WKT();
+
+        drawFeature.setProperties({
+            'featureType': 'LINK',
+            'LINK_ID': "CL" + makeTimeKey(),
+            'UP_FROM_NODE': '',
+            'UP_TO_NODE': '',
+            'UP_LANES': '',
+            'ROAD_NAME': '',
+            'DOWN_FROM_NODE': '',
+            'DOWN_TO_NODE': '',
+            'DOWN_LANES': '',
+            'FIRST_DO': '',
+            'FIRST_GU': '',
+            'LEFT_TURN_TYPE': '',
+            'EX_POCKET': '',
+            'IS_CHANGE_LANES': '',
+            'WKT': wktFormat.writeGeometry(drawFeature.getGeometry()).replace("(", " (").replace(",",", ")
+        })
+
+        const firstCoords = drawFeature.getGeometry().getFirstCoordinate();
+        const lastCoords = drawFeature.getGeometry().getLastCoordinate();
+
+        const intersect = source.getFeaturesInExtent(drawFeature.getGeometry().getExtent());
+
+        if (intersect.length > 0) { // 기 존재 노드 하나라도 포함
+            let uniqueNodes = [];
+
+            intersect.forEach(v => {
+                uniqueNodes.push(v.get("UP_FROM_NODE"));
+                uniqueNodes.push(v.get("UP_TO_NODE"));
+            })
+
+            uniqueNodes = Array.from(new Set(uniqueNodes));
+
+            const nodeMap = uniqueNodes.map(v => {
+                return NODE_DATA.find(v2 => v2.node_id === v);
+            }).filter(v => v);
+
+            nodeMap.forEach(v => {
+
+                console.log(v);
+
+                let _feature = wktFormat.readFeature(v.wkt,  {
+                  dataProjection: 'EPSG:4326',
+                  featureProjection: 'EPSG:4326'
+                });
+                _feature.setProperties({
+                    featureType: 'NODE',
+                    NODE_ID: v.node_id,
+                    NODE_TYPE: v.node_type,
+                    NODE_NAME: v.node_name,
+                    TRAFFIC_LIGHT: v.traffic_light,
+                    DISTRICT_ID: v.district_id,
+                    DISTRICT_ID2: v.district_id2,
+                    WKT: v.wkt
+                })
+                tempNodeSource.addFeature(_feature);
+            })
+
+        }
+
+        const FROM_COORDS_CIRCLE = new Circle(firstCoords, CIRCLE_RADIUS)
+        const TO_COORDS_CIRCLE = new Circle(lastCoords, CIRCLE_RADIUS)
+
+        const intersectFromNode = tempNodeSource.getFeaturesInExtent(FROM_COORDS_CIRCLE.getExtent());
+        const intersectToNode = tempNodeSource.getFeaturesInExtent(TO_COORDS_CIRCLE.getExtent());
+
+        let FROM_NODE_PROPS, TO_NODE_PROPS;
+
+        if (intersectFromNode.length > 0 && intersectToNode.length > 0) { // 기노드 간 연결
+            console.log('기존재 노드 간 연결')
+            FROM_NODE_PROPS = intersectFromNode[0].getProperties();
+            TO_NODE_PROPS = intersectToNode[0].getProperties();
+
+            console.log(FROM_NODE_PROPS);
+            console.log(TO_NODE_PROPS);
+        } else if (intersectFromNode.length > 0 || intersectToNode.length > 0) {
+            console.log('하나만 기존재 노드');
+
+            const NODE_DATA_REPO_TEMPLATE = {
+                DATA_TYPE: intersectToNode.length > 0 ? 'FROM' : 'TO',
+                NODE_ID: intersectToNode.length > 0 ? "CFN" + makeTimeKey() : "CTN" + makeTimeKey(),
+                NODE_TYPE: '',
+                NODE_NAME: '',
+                TRAFFIC_LIGHT: '',
+                DISTRICT_ID: '',
+                DISTRICT_ID2: ''
+            }
+
+            FROM_NODE_PROPS = intersectFromNode.length > 0 ? intersectFromNode[0].getProperties() : NODE_DATA_REPO_TEMPLATE;
+            TO_NODE_PROPS = intersectToNode.length > 0 ? intersectToNode[0].getProperties() : NODE_DATA_REPO_TEMPLATE;
+
+            console.log(FROM_NODE_PROPS);
+            console.log(TO_NODE_PROPS);
+        } else {
+            console.log('둘 다 신규노드')
+
+            FROM_NODE_PROPS = {
+                DATA_TYPE: 'FROM',
+                NODE_ID: "CFN" + makeTimeKey(),
+                NODE_TYPE: '',
+                NODE_NAME: '',
+                TRAFFIC_LIGHT: '',
+                DISTRICT_ID: '',
+                DISTRICT_ID2: ''
+            }
+
+            TO_NODE_PROPS = {
+                DATA_TYPE: 'TO',
+                NODE_ID: "CTN" + makeTimeKey(),
+                NODE_TYPE: '',
+                NODE_NAME: '',
+                TRAFFIC_LIGHT: '',
+                DISTRICT_ID: '',
+                DISTRICT_ID2: ''
+            }
+
+            console.log(FROM_NODE_PROPS);
+            console.log(TO_NODE_PROPS);
+        }
+
+        drawFeature.set("FROM_NODE_DATA_REPO", FROM_NODE_PROPS);
+        drawFeature.set("TO_NODE_DATA_REPO", TO_NODE_PROPS);
+        const { FROM_NODE_DATA_REPO, TO_NODE_DATA_REPO, ...LINK_DATA_REPO } = JSON.parse(JSON.stringify(drawFeature.getProperties()));
+        drawFeature.set("LINK_DATA_REPO", LINK_DATA_REPO);
+
+        console.log(drawFeature.getProperties());
+    })
+
+    map.addInteraction(draw);
+}
+
 //
 
 function getSmInter() {
@@ -590,31 +690,19 @@ function getFeaturesByZone(_displayZoneWKT) {
   })
   .then(({ data }) => {
 
+      console.log(data);
+
     LINK_DATA = data.LINK_DATA;
     NODE_DATA = data.NODE_DATA;
 
     makeLinkFeatures(LINK_DATA);
+    // makeNodeFeatures(NODE_DATA);
 
   })
   .catch(function (error) {
     console.log(error);
   });
 
-}
-
-function getRcLineByZone(_displayZoneWKT) {
-  axios.post(`${common.API_PATH}/api/getRcline`, {
-    wkt: _displayZoneWKT,
-    sggCode: getCheckValue()
-  })
-  .then(({ data }) => {
-
-    makeRcLineFeatures(data);
-
-  })
-  .catch(function (error) {
-    console.log(error);
-  });
 }
 
 function makeLinkFeatures(_data) {
@@ -629,7 +717,6 @@ function makeLinkFeatures(_data) {
       if (removeTarget) {
         source.removeFeature(removeTarget)
       }
-
       continue;
     };
     let _feature = format.readFeature(d.wkt,  {
@@ -655,32 +742,39 @@ function makeLinkFeatures(_data) {
       'IS_CHANGE_LANES': d.is_change_lanes || '',
       'WKT': d.wkt
     })
+    setNodeData(_feature)
     source.addFeature(_feature);
     _feature.setStyle(styleFunction)
   }
 
 }
 
-function makeRcLineFeatures(_data) {
+function makeNodeFeatures(_data) {
 
-  const dataLength = _data.length;
-  const format = new WKT();
+    const dataLength = _data.length;
 
-  for (let i=0; i<dataLength; i++) {
-    const d = _data[i];
-    let _feature = format.readFeature(d.wkt,  {
-      dataProjection: 'EPSG:4326',
-      featureProjection: 'EPSG:4326'
-    });
-    _feature.setId(d.ufid);
-    _feature.setProperties({
-      'featureType': 'RCLINE',
-      'WKT': d.wkt
-    })
-    source.addFeature(_feature);
-    _feature.setStyle(rcLineStyleFunction);
-  }
+    const format = new WKT();
 
+    for (let i=0; i<dataLength; i++) {
+        const d = _data[i];
+        let removeTarget = source.getFeatureById(d.node_id);
+        if (removeTarget) {
+          source.removeFeature(removeTarget)
+            continue;
+        }
+
+      let _feature = format.readFeature(d.wkt,  {
+        dataProjection: 'EPSG:4326',
+        featureProjection: 'EPSG:4326'
+      });
+      _feature.setId(d.node_id);
+      _feature.setProperties({
+        'featureType': 'NODE',
+        'NODE_ID': d.node_id,
+        'WKT': d.wkt
+      })
+      source.addFeature(_feature);
+    }
 }
 
 function setGridEditable() {
@@ -768,7 +862,8 @@ function setNodeData(target) {
           NODE_NAME: FROM_NODE_PROPS.node_name,
           TRAFFIC_LIGHT: FROM_NODE_PROPS.traffic_light,
           DISTRICT_ID: FROM_NODE_PROPS.district_id,
-          DISTRICT_ID2: FROM_NODE_PROPS.district_id2
+          DISTRICT_ID2: FROM_NODE_PROPS.district_id2,
+          WKT: FROM_NODE_PROPS.wkt
     }
 
     const TO_NODE_PROPS_FORM = {
@@ -777,7 +872,8 @@ function setNodeData(target) {
           NODE_NAME: TO_NODE_PROPS.node_name,
           TRAFFIC_LIGHT: TO_NODE_PROPS.traffic_light,
           DISTRICT_ID: TO_NODE_PROPS.district_id,
-          DISTRICT_ID2: TO_NODE_PROPS.district_id2
+          DISTRICT_ID2: TO_NODE_PROPS.district_id2,
+          WKT: TO_NODE_PROPS.wkt
     }
 
     LINK_PROPS.FROM_NODE_DATA_REPO = FROM_NODE_PROPS_FORM;
@@ -860,7 +956,7 @@ function getExtent() {
 }
 
 function getSelectedFeaturesId() {
-    return select.getFeatures().getArray().map(v => v.getId());
+    return select ? select.getFeatures().getArray().map(v => v.getId()) : [];
 }
 
 function getZoomLevel() {
@@ -909,8 +1005,6 @@ function clearing() {
     }
 
     select.getFeatures().clear();
-
-    getRcLineByZone(wkt);
 }
 
 function getCheckValue() {
