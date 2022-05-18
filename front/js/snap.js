@@ -28,9 +28,12 @@ import WKT from 'ol/format/WKT';
 import Grid from "tui-grid";
 import Circle from "ol/geom/Circle";
 
+
 // global value
 let LINK_DATA = null;
 let NODE_DATA = null;
+
+let CIRCLE_RADIUS = 0.0000005;
 
 let map = null;
 
@@ -617,6 +620,12 @@ function getRcLineByZone(_displayZoneWKT) {
   })
   .then(({ data }) => {
 
+    source.forEachFeature((f) => {
+        if (f.get("featureType") === "RCLINE") {
+            source.removeFeature(f);
+      }
+    })
+
     makeRcLineFeatures(data);
 
   })
@@ -908,17 +917,19 @@ function clearing() {
         displayZoneFeature = new Feature({
             geometry: displayZonePolygon
         })
+        getRcLineByZone(wkt);
+
+        if (getCheckValue().length === 0) {
+            getFeaturesByZone(wkt);
+        } else {
+            getFeaturesByZone('');
+        }
     }
 
-    if (getCheckValue().length === 0) {
-        getFeaturesByZone(wkt);
-    } else {
-        getFeaturesByZone('');
-    }
+    getFeaturesByZone('');
+
 
     select.getFeatures().clear();
-
-    getRcLineByZone(wkt);
 }
 
 function getCheckValue() {
