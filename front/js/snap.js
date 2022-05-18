@@ -26,6 +26,7 @@ import UndoRedo from 'ol-ext/interaction/UndoRedo'
 import { fromExtent } from 'ol/geom/Polygon';
 import WKT from 'ol/format/WKT';
 import Grid from "tui-grid";
+import Circle from "ol/geom/Circle";
 
 // global value
 let LINK_DATA = null;
@@ -385,11 +386,19 @@ function initMap() {
     map.getViewport().addEventListener('contextmenu', function (evt) {
         evt.preventDefault();
         const pixel = map.getEventPixel(evt)
+        const coords = map.getEventCoordinate(evt);
         let target = null;
 
-        map.forEachFeatureAtPixel(pixel, function(_f) {
-            if (_f.get("featureType") === "LINK") {
-                target = _f;
+        const selectedFeatures = select.getFeatures();
+        const idMaps = selectedFeatures.getArray().map(v => v.getId());
+
+        const COORDS_CIRCLE = new Circle(coords, CIRCLE_RADIUS)
+
+        const intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
+
+        intersect.forEach(function(v) {
+            if (v.get("featureType") === "LINK") {
+                target = v;
             }
         })
 
