@@ -30,12 +30,30 @@ public class NodeEntity {
     private String USE_YN;
 
     public void setAll(NodeEntity _nodeEntity) {
-        this.NODE_TYPE = _nodeEntity.NODE_TYPE;
-        this.TRAFFIC_LIGHT = _nodeEntity.TRAFFIC_LIGHT;
-        this.NODE_NAME = _nodeEntity.NODE_NAME;
-        this.DISTRICT_ID = _nodeEntity.DISTRICT_ID;
-        this.DISTRICT_ID2 = _nodeEntity.DISTRICT_ID2;
-        this.WKT = _nodeEntity.WKT;
+
+        if (!_nodeEntity.NODE_TYPE.equals("") && _nodeEntity.NODE_TYPE != null) {
+            this.NODE_TYPE = _nodeEntity.NODE_TYPE;
+        }
+
+        if (!_nodeEntity.TRAFFIC_LIGHT.equals("") && _nodeEntity.TRAFFIC_LIGHT != null) {
+            this.TRAFFIC_LIGHT = _nodeEntity.TRAFFIC_LIGHT;
+        }
+
+        if (!_nodeEntity.NODE_NAME.equals("") && _nodeEntity.NODE_NAME != null) {
+            this.NODE_NAME = _nodeEntity.NODE_NAME;
+        }
+
+        if (!_nodeEntity.DISTRICT_ID.equals("") && _nodeEntity.DISTRICT_ID != null) {
+            this.DISTRICT_ID = _nodeEntity.DISTRICT_ID;
+        }
+
+        if (!_nodeEntity.DISTRICT_ID2.equals("") && _nodeEntity.DISTRICT_ID2 != null) {
+            this.DISTRICT_ID2 = _nodeEntity.DISTRICT_ID2;
+        }
+
+        if (!_nodeEntity.WKT.equals("") && _nodeEntity.WKT != null) {
+            this.WKT = _nodeEntity.WKT;
+        }
 
         this.USE_YN = _nodeEntity.USE_YN != null ? _nodeEntity.USE_YN : "Y";
     }

@@ -17,7 +17,7 @@ import Point from 'ol/geom/Point';
 import Circle from 'ol/geom/Circle';
 import { buffer } from 'ol/extent';
 import MultiPoint from 'ol/geom/MultiPoint';
-import { platformModifierKeyOnly } from 'ol/events/condition';
+import { click, platformModifierKeyOnly } from 'ol/events/condition';
 
 // import BlueArrowImg from '../data/resize_blue_arrow.png';
 // import NormalArrowImg from '../data/resize_normal_arrow.png';
@@ -29,6 +29,7 @@ import { fromExtent } from 'ol/geom/Polygon';
 import WKT from 'ol/format/WKT';
 import Grid from "tui-grid";
 import {Polygon} from "ol/geom";
+import Split from "ol-ext/interaction/Split";
 
 // global value
 let LINK_DATA = null;
@@ -189,7 +190,7 @@ let SHOW_USE_YN = 'Y';
 let targetFeature = null;
 
 // interactionValue
-let select, snap, modify, undoInteraction, draw, drawModify;
+let select, snap, modify, undoInteraction, draw, split;
 //
 
 // grid value
@@ -222,9 +223,9 @@ document.addEventListener('DOMContentLoaded', function() {
     addSelectInteraction();
     addDrawBoxInteraction();
     addUndoInteraction();
-    addModifyInteraction();
-    addDrawInteraction();
-    addSnapInteraction();
+    // addModifyInteraction();
+    // addDrawInteraction();
+    // addSnapInteraction();
 
     domEventRegister();
 })
@@ -253,6 +254,54 @@ function domEventRegister() {
           clearing();
       })
     });
+
+    document.getElementById('CREATE-BTN').addEventListener('click', () => {
+        buttonStyleToggle(document.getElementById('CREATE-BTN'));
+
+        const isOn = document.getElementById('CREATE-BTN').classList.contains('btn-primary');
+
+        allInteractionOff()
+        select.getFeatures().clear();
+        clearing();
+
+        console.log(isOn);
+
+        if (isOn) {
+            addDrawInteraction();
+            addModifyInteraction();
+            addSnapInteraction();
+        }
+    })
+
+    document.getElementById('MODIFY-BTN').addEventListener('click', () => {
+        buttonStyleToggle(document.getElementById('MODIFY-BTN'));
+
+        const isOn = document.getElementById('MODIFY-BTN').classList.contains('btn-primary');
+
+        allInteractionOff();
+        select.getFeatures().clear();
+        clearing();
+
+        if (isOn) {
+            addModifyInteraction();
+            addSnapInteraction();
+        }
+    })
+
+    document.getElementById('SPLIT-BTN').addEventListener('click', () => {
+        buttonStyleToggle(document.getElementById('SPLIT-BTN'));
+
+        const isOn = document.getElementById('SPLIT-BTN').classList.contains('btn-primary');
+
+        allInteractionOff();
+        select.getFeatures().clear();
+        clearing();
+
+        if (isOn) {
+            addSplitInteraction();
+
+        }
+    })
 
     Hotkeys('ctrl+q', function(event, handler) {
         // Prevent the default refresh event under WINDOWS system
@@ -283,6 +332,21 @@ function domEventRegister() {
                 target.set("LINK_DATA_REPO", LINK_DATA_REPO);
             }
         });
+    })
+
+    Hotkeys('delete', function(event, handler) {
+        // Prevent the default refresh event under WINDOWS system
+        event.preventDefault()
+
+        const isConfirm = confirm('선택된 형상들을 삭제하시겠습니까?')
+        if (isConfirm) {
+            select.getFeatures().forEach(function(_f) {
+                deleteData(_f.get("LINK_ID"),"LINK")
+            })
+            alert('저장되었습니다.');
+        }
+
+
     })
 }
 
@@ -337,18 +401,39 @@ function initMap() {
     map.getViewport().addEventListener('contextmenu', function (evt) {
         evt.preventDefault();
         const pixel = map.getEventPixel(evt)
+        const coords = map.getEventCoordinate(evt);
         let target = null;
 
-        map.forEachFeatureAtPixel(pixel, function(_f) {
-            if (_f.get("featureType") === "LINK") {
-                target = _f;
+        const selectedFeatures = select.getFeatures();
+        const idMaps = selectedFeatures.getArray().map(v => v.getId());
+
+        const COORDS_CIRCLE = new Circle(coords, CIRCLE_RADIUS)
+
+        const intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
+
+        intersect.forEach(function(v) {
+            if (v.get("featureType") === "LINK") {
+                target = v;
             }
         })
 
         if (target) {
-            setNodeData(target);
+            if (NODE_DATA) {
+                setNodeData(target);
+            }
             pushSaveData(target);
             setGridData(target);
+
+            if (idMaps.includes(target.getId())) {
+                selectedFeatures.forEach((sf) => {
+                    if (sf.getId() === target.getId()) {
+                        selectedFeatures.remove(sf);
+                    }
+                })
+            } else {
+                select.getFeatures().push(target);
+            }
+
         }
 
     })
@@ -414,7 +499,7 @@ function addSelectInteraction() {
 
         },
         style: styleFunction,
-        multi: true
+        multi: false
     })
 
     let selectedFeatures = select.getFeatures();
@@ -423,7 +508,9 @@ function addSelectInteraction() {
         selectedFeatures.forEach(function(value) {
             const target = value;
             if (target.get("featureType") === "LINK") {
-                setNodeData(target);
+                if (NODE_DATA) {
+                    setNodeData(target);
+                }
                 pushSaveData(target);
             }
         });
@@ -518,6 +605,7 @@ function addDrawInteraction() {
             'IS_CHANGE_LANES': '',
             'WKT': wktFormat.writeGeometry(drawFeature.getGeometry()).replace("(", " (").replace(",",", ")
         })
+        drawFeature.setId(drawFeature.get("LINK_ID"));
 
         const firstCoords = drawFeature.getGeometry().getFirstCoordinate();
         const lastCoords = drawFeature.getGeometry().getLastCoordinate();
@@ -621,16 +709,88 @@ function addDrawInteraction() {
             console.log(TO_NODE_PROPS);
         }
 
+        drawFeature.set("UP_FROM_NODE", FROM_NODE_PROPS.NODE_ID);
+        drawFeature.set("UP_TO_NODE", TO_NODE_PROPS.NODE_ID);
+
         drawFeature.set("FROM_NODE_DATA_REPO", FROM_NODE_PROPS);
         drawFeature.set("TO_NODE_DATA_REPO", TO_NODE_PROPS);
         const { FROM_NODE_DATA_REPO, TO_NODE_DATA_REPO, ...LINK_DATA_REPO } = JSON.parse(JSON.stringify(drawFeature.getProperties()));
         drawFeature.set("LINK_DATA_REPO", LINK_DATA_REPO);
 
         console.log(drawFeature.getProperties());
+
+        select.getFeatures().push(drawFeature);
+        setGridData(drawFeature);
     })
 
     map.addInteraction(draw);
 }
+
+function addSplitInteraction() {
+    split = new Split(
+        {
+            sources: source
+        });
+
+    split.on('beforesplit', function (e) {
+        console.log('beforesplit');
+        const origin = e.original;
+    })
+
+    split.on('aftersplit', function (e, a, b) {
+        console.log('aftersplit');
+        const wktFormat = new WKT();
+        const firstLink = e.features[0];
+        const secondLink = e.features[1];
+        const splitNode = new Point(firstLink.getGeometry().getLastCoordinate());
+        console.log(firstLink.getProperties());
+
+        const splitNodeKey = "SL" + makeTimeKey();
+        let firstLinkLinkDataRepo = JSON.parse(JSON.stringify(firstLink.get("LINK_DATA_REPO")));
+        let secondLinkLinkDataRepo = JSON.parse(JSON.stringify(secondLink.get("LINK_DATA_REPO")));
+
+        firstLink.set("UP_TO_NODE", splitNodeKey);
+        firstLink.set("DOWN_FROM_NODE", splitNodeKey);
+        firstLink.set("WKT", wktFormat.writeGeometry(firstLink.getGeometry()).replace("(", " (").replace(",",", "))
+        firstLinkLinkDataRepo.WKT = wktFormat.writeGeometry(firstLink.getGeometry()).replace("(", " (").replace(",",", ");
+
+        firstLinkLinkDataRepo.TO_NODE_DATA_REPO = {
+            NODE_ID: splitNodeKey,
+            NODE_TYPE: '',
+            NODE_NAME: '',
+            TRAFFIC_LIGHT: '',
+            DISTRICT_ID: '',
+            DISTRICT_ID2: '',
+            WKT: wktFormat.writeGeometry(splitNode).replace("(", " (").replace(",",", ")
+        }
+        firstLink.set("LINK_DATA_REPO", firstLinkLinkDataRepo);
+
+        secondLink.set("UP_FROM_NODE", splitNodeKey);
+        secondLink.set("DOWN_TO_NODE", splitNodeKey);
+        secondLink.set("WKT", wktFormat.writeGeometry(secondLink.getGeometry()).replace("(", " (").replace(",",", "))
+        secondLinkLinkDataRepo.WKT = wktFormat.writeGeometry(firstLink.getGeometry()).replace("(", " (").replace(",",", ");
+
+        secondLinkLinkDataRepo.FROM_NODE_DATA_REPO = {
+            NODE_ID: splitNodeKey,
+            NODE_TYPE: '',
+            NODE_NAME: '',
+            TRAFFIC_LIGHT: '',
+            DISTRICT_ID: '',
+            DISTRICT_ID2: '',
+            WKT: wktFormat.writeGeometry(splitNode).replace("(", " (").replace(",",", ")
+        }
+        secondLink.set("LINK_DATA_REPO", secondLinkLinkDataRepo);
+
+        console.log('first link');
+        console.log(firstLink.getProperties());
+
+        console.log('second link');
+        console.log(secondLink.getProperties());
+    })
+
+    map.addInteraction(split)
+}
+
 
 //
 
@@ -742,7 +902,9 @@ function makeLinkFeatures(_data) {
       'IS_CHANGE_LANES': d.is_change_lanes || '',
       'WKT': d.wkt
     })
-    setNodeData(_feature)
+    if (NODE_DATA) {
+        setNodeData(_feature)
+    }
     source.addFeature(_feature);
     _feature.setStyle(styleFunction)
   }
@@ -856,28 +1018,31 @@ function setNodeData(target) {
         return v.node_id === TO_NODE;
     })
 
-    const FROM_NODE_PROPS_FORM = {
-          NODE_ID: FROM_NODE_PROPS.node_id,
-          NODE_TYPE: FROM_NODE_PROPS.node_type,
-          NODE_NAME: FROM_NODE_PROPS.node_name,
-          TRAFFIC_LIGHT: FROM_NODE_PROPS.traffic_light,
-          DISTRICT_ID: FROM_NODE_PROPS.district_id,
-          DISTRICT_ID2: FROM_NODE_PROPS.district_id2,
-          WKT: FROM_NODE_PROPS.wkt
+    if (FROM_NODE_PROPS) {
+        const FROM_NODE_PROPS_FORM = {
+              NODE_ID: FROM_NODE_PROPS.node_id,
+              NODE_TYPE: FROM_NODE_PROPS.node_type,
+              NODE_NAME: FROM_NODE_PROPS.node_name,
+              TRAFFIC_LIGHT: FROM_NODE_PROPS.traffic_light,
+              DISTRICT_ID: FROM_NODE_PROPS.district_id,
+              DISTRICT_ID2: FROM_NODE_PROPS.district_id2,
+              WKT: FROM_NODE_PROPS.wkt
+        }
+        LINK_PROPS.FROM_NODE_DATA_REPO = FROM_NODE_PROPS_FORM;
     }
 
-    const TO_NODE_PROPS_FORM = {
-          NODE_ID: TO_NODE_PROPS.node_id,
-          NODE_TYPE: TO_NODE_PROPS.node_type,
-          NODE_NAME: TO_NODE_PROPS.node_name,
-          TRAFFIC_LIGHT: TO_NODE_PROPS.traffic_light,
-          DISTRICT_ID: TO_NODE_PROPS.district_id,
-          DISTRICT_ID2: TO_NODE_PROPS.district_id2,
-          WKT: TO_NODE_PROPS.wkt
+    if (TO_NODE_PROPS) {
+        const TO_NODE_PROPS_FORM = {
+              NODE_ID: TO_NODE_PROPS.node_id,
+              NODE_TYPE: TO_NODE_PROPS.node_type,
+              NODE_NAME: TO_NODE_PROPS.node_name,
+              TRAFFIC_LIGHT: TO_NODE_PROPS.traffic_light,
+              DISTRICT_ID: TO_NODE_PROPS.district_id,
+              DISTRICT_ID2: TO_NODE_PROPS.district_id2,
+              WKT: TO_NODE_PROPS.wkt
+        }
+        LINK_PROPS.TO_NODE_DATA_REPO = TO_NODE_PROPS_FORM;
     }
-
-    LINK_PROPS.FROM_NODE_DATA_REPO = FROM_NODE_PROPS_FORM;
-    LINK_PROPS.TO_NODE_DATA_REPO = TO_NODE_PROPS_FORM;
 
     target.set("LINK_DATA_REPO", LINK_PROPS);
 }
@@ -926,6 +1091,7 @@ function applyData() {
     const urlPrefix = `${common.API_PATH}/api`;
 
     const DATA_REPO = saveDataArchive.map(v => {
+        console.log(v);
         const findFeature = source.getFeatureById(v);
         const findFeaturesProps = findFeature.getProperties();
         return findFeaturesProps;
@@ -947,6 +1113,24 @@ function applyData() {
     });
 
 
+}
+
+function deleteData(_id, _dataType) {
+  axios.post(`${common.API_PATH}/api/deleteData`, {
+      id: _id,
+      dataType: _dataType
+    })
+    .then(({ data }) => {
+
+      console.log(data);
+      if (data) {
+        clearing();
+      }
+
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
 }
 
 //////////////////////////////
@@ -999,7 +1183,9 @@ function clearing() {
     }
 
     if (getCheckValue().length === 0) {
-        getFeaturesByZone(wkt);
+        if (getZoomLevel() > 16) {
+            getFeaturesByZone(wkt);
+        }
     } else {
         getFeaturesByZone('');
     }
@@ -1040,4 +1226,28 @@ function wktUpdate() {
         _f.set("FROM_NODE_DATA_REPO", FROM_NODE_DATA_REPO);
         _f.set("TO_NODE_DATA_REPO", TO_NODE_DATA_REPO);
     })
+}
+
+function allInteractionOff() {
+    if (draw && draw.getActive()) {
+        draw.setActive(false)
+    }
+    if (modify && modify.getActive()) {
+        modify.setActive(false)
+    }
+}
+
+function buttonStyleToggle(_dom) {
+    const isOn = _dom.classList.contains('btn-primary');
+
+    const allBtn = document.getElementsByClassName('control-btn');
+    for (let i=0; i<allBtn.length; i++) {
+        allBtn[i].classList.replace('btn-primary', 'btn-secondary');
+    }
+
+    if (isOn) {
+        _dom.classList.replace('btn-primary', 'btn-secondary');
+    } else {
+        _dom.classList.replace('btn-secondary', 'btn-primary');
+    }
 }

@@ -360,7 +360,7 @@ function domEventRegister() {
     state.mode = 'CREATE-LINK';
   })
 
-  document.getElementById('MODIFIY-BTN').addEventListener('click', (e) => {
+  document.getElementById('MODIFY-BTN').addEventListener('click', (e) => {
     state.mode = 'MODIFY';
   })
 

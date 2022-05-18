@@ -527,7 +527,6 @@ function addDrawBoxInteraction() {
       const extent = dragBox.getGeometry().getExtent();
       const boxFeatures = source.getFeaturesInExtent(extent).filter((feature) => feature.getGeometry().intersectsExtent(extent));
       selectedFeatures.extend(boxFeatures);
-      wktUpdate();
     });
 
     map.addInteraction(dragBox);

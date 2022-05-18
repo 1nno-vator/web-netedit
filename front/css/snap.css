@@ -90,10 +90,10 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   justify-content: center;
   align-content: center;
   left: 5px;
+  margin-top: 25%;
 }
 .control-btn-zone button {
   padding: 5px 25px;
