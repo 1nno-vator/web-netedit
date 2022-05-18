@@ -41,6 +41,9 @@ public class LinkEntity {
     private String USE_YN;
 
     public void setAll(LinkEntity _linkEntity) {
+
+        System.out.println(_linkEntity.toString());
+
         if (!_linkEntity.UP_FROM_NODE.equals("") && _linkEntity.UP_FROM_NODE != null) {
             this.UP_FROM_NODE = _linkEntity.UP_FROM_NODE;
         }
@@ -91,9 +94,7 @@ public class LinkEntity {
             this.IS_CHANGE_LANES = _linkEntity.IS_CHANGE_LANES;
         }
 
-        if (!_linkEntity.WKT.equals("") && _linkEntity.WKT != null) {
-            this.WKT = _linkEntity.WKT;
-        }
+        this.WKT = _linkEntity.WKT;
 
         this.USE_YN = _linkEntity.USE_YN != null ? _linkEntity.USE_YN : "Y";
 

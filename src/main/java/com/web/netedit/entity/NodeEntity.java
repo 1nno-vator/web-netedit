@@ -31,6 +31,8 @@ public class NodeEntity {
 
     public void setAll(NodeEntity _nodeEntity) {
 
+        System.out.println(_nodeEntity.toString());
+
         if (!_nodeEntity.NODE_TYPE.equals("") && _nodeEntity.NODE_TYPE != null) {
             this.NODE_TYPE = _nodeEntity.NODE_TYPE;
         }
@@ -51,9 +53,7 @@ public class NodeEntity {
             this.DISTRICT_ID2 = _nodeEntity.DISTRICT_ID2;
         }
 
-        if (!_nodeEntity.WKT.equals("") && _nodeEntity.WKT != null) {
-            this.WKT = _nodeEntity.WKT;
-        }
+        this.WKT = _nodeEntity.WKT;
 
         this.USE_YN = _nodeEntity.USE_YN != null ? _nodeEntity.USE_YN : "Y";
     }
