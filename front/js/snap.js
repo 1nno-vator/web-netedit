@@ -868,7 +868,7 @@ function getExtent() {
 }
 
 function getSelectedFeaturesId() {
-    return select.getFeatures().getArray().map(v => v.getId());
+    return select ? select.getFeatures().getArray().map(v => v.getId()) : [];
 }
 
 function getZoomLevel() {
