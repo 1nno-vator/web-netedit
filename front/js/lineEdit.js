@@ -36,6 +36,7 @@ let LINK_DATA = null;
 let NODE_DATA = null;
 
 let CIRCLE_RADIUS = 0.0000005;
+let SPLIT_COUNT = 0;
 
 let map = null;
 
@@ -214,6 +215,9 @@ const DEFAULT_COLUMN = [
   }
 ];
 
+let DELETE_FEATURES_ID = [];
+let EXCLUDE_FEATURES_ID = [];
+
 document.addEventListener('DOMContentLoaded', function() {
     initMap();
     initGrid();
@@ -256,6 +260,11 @@ function domEventRegister() {
     });
 
     document.getElementById('CREATE-BTN').addEventListener('click', () => {
+        const isContinue = confirm('저장하지않은 내용은 사라집니다.\n진행합니까?');
+        if (!isContinue) {
+            return false;
+        }
+
         buttonStyleToggle(document.getElementById('CREATE-BTN'));
 
         const isOn = document.getElementById('CREATE-BTN').classList.contains('btn-primary');
@@ -264,16 +273,18 @@ function domEventRegister() {
         select.getFeatures().clear();
         clearing();
 
-        console.log(isOn);
-
         if (isOn) {
-            addDrawInteraction();
             addModifyInteraction();
+            addDrawInteraction();
             addSnapInteraction();
         }
     })
 
     document.getElementById('MODIFY-BTN').addEventListener('click', () => {
+        const isContinue = confirm('저장하지않은 내용은 사라집니다.\n진행합니까?');
+        if (!isContinue) {
+            return false;
+        }
         buttonStyleToggle(document.getElementById('MODIFY-BTN'));
 
         const isOn = document.getElementById('MODIFY-BTN').classList.contains('btn-primary');
@@ -289,6 +300,10 @@ function domEventRegister() {
     })
 
     document.getElementById('SPLIT-BTN').addEventListener('click', () => {
+        const isContinue = confirm('저장하지않은 내용은 사라집니다.\n진행합니까?');
+        if (!isContinue) {
+            return false;
+        }
         buttonStyleToggle(document.getElementById('SPLIT-BTN'));
 
         const isOn = document.getElementById('SPLIT-BTN').classList.contains('btn-primary');
@@ -299,7 +314,6 @@ function domEventRegister() {
 
         if (isOn) {
             addSplitInteraction();
-
         }
     })
 
@@ -505,6 +519,7 @@ function addSelectInteraction() {
     let selectedFeatures = select.getFeatures();
 
     selectedFeatures.on('add', function(e) {
+
         selectedFeatures.forEach(function(value) {
             const target = value;
             if (target.get("featureType") === "LINK") {
@@ -514,6 +529,15 @@ function addSelectInteraction() {
                 pushSaveData(target);
             }
         });
+
+    })
+
+    selectedFeatures.on('remove', function(value) {
+        if (selectedFeatures.getArray().length === 0) {
+            LINK_GRID_INSTANCE.resetData([]);
+            FROM_NODE_GRID_INSTANCE.resetData([]);
+            TO_NODE_GRID_INSTANCE.resetData([]);
+        }
     })
 
     map.addInteraction(select);
@@ -576,7 +600,6 @@ function addDrawInteraction() {
     });
 
     draw.on('drawstart', function(e) {
-        console.log('draw start');
 
         e.feature.setStyle(styleFunction);
         tempNodeSource.clear();
@@ -627,8 +650,6 @@ function addDrawInteraction() {
             }).filter(v => v);
 
             nodeMap.forEach(v => {
-
-                console.log(v);
 
                 let _feature = wktFormat.readFeature(v.wkt,  {
                   dataProjection: 'EPSG:4326',
@@ -711,10 +732,14 @@ function addDrawInteraction() {
 
         drawFeature.set("UP_FROM_NODE", FROM_NODE_PROPS.NODE_ID);
         drawFeature.set("UP_TO_NODE", TO_NODE_PROPS.NODE_ID);
+        drawFeature.set("DOWN_FROM_NODE", TO_NODE_PROPS.NODE_ID);
+        drawFeature.set("DOWN_TO_NODE", FROM_NODE_PROPS.NODE_ID);
 
         drawFeature.set("FROM_NODE_DATA_REPO", FROM_NODE_PROPS);
         drawFeature.set("TO_NODE_DATA_REPO", TO_NODE_PROPS);
         const { FROM_NODE_DATA_REPO, TO_NODE_DATA_REPO, ...LINK_DATA_REPO } = JSON.parse(JSON.stringify(drawFeature.getProperties()));
+        LINK_DATA_REPO.FROM_NODE_DATA_REPO = FROM_NODE_PROPS;
+        LINK_DATA_REPO.TO_NODE_DATA_REPO = TO_NODE_PROPS;
         drawFeature.set("LINK_DATA_REPO", LINK_DATA_REPO);
 
         console.log(drawFeature.getProperties());
@@ -727,14 +752,14 @@ function addDrawInteraction() {
 }
 
 function addSplitInteraction() {
-    split = new Split(
-        {
-            sources: source
-        });
+    split = new Split({
+        sources: source
+    });
 
     split.on('beforesplit', function (e) {
         console.log('beforesplit');
         const origin = e.original;
+        DELETE_FEATURES_ID.push(origin.get("LINK_ID"));
     })
 
     split.on('aftersplit', function (e, a, b) {
@@ -743,9 +768,8 @@ function addSplitInteraction() {
         const firstLink = e.features[0];
         const secondLink = e.features[1];
         const splitNode = new Point(firstLink.getGeometry().getLastCoordinate());
-        console.log(firstLink.getProperties());
 
-        const splitNodeKey = "SL" + makeTimeKey();
+        const splitNodeKey = "SN" + makeTimeKey();
         let firstLinkLinkDataRepo = JSON.parse(JSON.stringify(firstLink.get("LINK_DATA_REPO")));
         let secondLinkLinkDataRepo = JSON.parse(JSON.stringify(secondLink.get("LINK_DATA_REPO")));
 
@@ -763,6 +787,13 @@ function addSplitInteraction() {
             DISTRICT_ID2: '',
             WKT: wktFormat.writeGeometry(splitNode).replace("(", " (").replace(",",", ")
         }
+
+        let firstLinkKey = firstLink.get("UP_FROM_NODE") + "_" + firstLink.get("UP_TO_NODE");
+
+        firstLink.set("LINK_ID", firstLinkKey);
+        firstLink.setId(firstLink.get("LINK_ID"));
+        firstLinkLinkDataRepo.LINK_ID = firstLinkKey;
+
         firstLink.set("LINK_DATA_REPO", firstLinkLinkDataRepo);
 
         secondLink.set("UP_FROM_NODE", splitNodeKey);
@@ -779,6 +810,13 @@ function addSplitInteraction() {
             DISTRICT_ID2: '',
             WKT: wktFormat.writeGeometry(splitNode).replace("(", " (").replace(",",", ")
         }
+
+        let secondLinkKey = secondLink.get("UP_FROM_NODE") + "_" + secondLink.get("UP_TO_NODE");
+
+        secondLink.set("LINK_ID", secondLinkKey);
+        secondLink.setId(secondLink.get("LINK_ID"));
+        secondLinkLinkDataRepo.LINK_ID = secondLinkKey;
+
         secondLink.set("LINK_DATA_REPO", secondLinkLinkDataRepo);
 
         console.log('first link');
@@ -786,6 +824,11 @@ function addSplitInteraction() {
 
         console.log('second link');
         console.log(secondLink.getProperties());
+
+        const splittedLink = [firstLink, secondLink]
+        select.getFeatures().extend(splittedLink);
+
+        SPLIT_COUNT = 1;
     })
 
     map.addInteraction(split)
@@ -850,7 +893,7 @@ function getFeaturesByZone(_displayZoneWKT) {
   })
   .then(({ data }) => {
 
-      console.log(data);
+    console.log(data);
 
     LINK_DATA = data.LINK_DATA;
     NODE_DATA = data.NODE_DATA;
@@ -1008,7 +1051,6 @@ function setGridEditable() {
 function setNodeData(target) {
     const FROM_NODE = target.get("UP_FROM_NODE");
     const TO_NODE = target.get("UP_TO_NODE");
-
     const {geometry, featureType, ...LINK_PROPS} = JSON.parse(JSON.stringify(target.getProperties()));
 
     const FROM_NODE_PROPS = NODE_DATA.find(v => {
@@ -1017,6 +1059,11 @@ function setNodeData(target) {
     const TO_NODE_PROPS = NODE_DATA.find(v => {
         return v.node_id === TO_NODE;
     })
+
+    const LINK_DATA_REPO = LINK_PROPS.LINK_DATA_REPO;
+    if (LINK_DATA_REPO) {
+        return;
+    }
 
     if (FROM_NODE_PROPS) {
         const FROM_NODE_PROPS_FORM = {
@@ -1051,6 +1098,11 @@ function pushSaveData(target) {
     // const {FROM_NODE_DATA_REPO, TO_NODE_DATA_REPO, geometry, featureType, ...LINK_DATA_REPO} = JSON.parse(JSON.stringify(target.getProperties()));
     saveDataArchive.push(target.getId());
     saveDataArchive = Array.from(new Set(saveDataArchive));
+
+
+
+    console.log('--saveDataArchive--')
+    console.log(saveDataArchive);
 }
 
 function setGridData(target) {
@@ -1091,8 +1143,8 @@ function applyData() {
     const urlPrefix = `${common.API_PATH}/api`;
 
     const DATA_REPO = saveDataArchive.map(v => {
-        console.log(v);
         const findFeature = source.getFeatureById(v);
+        console.log(v);
         const findFeaturesProps = findFeature.getProperties();
         return findFeaturesProps;
     })
@@ -1100,6 +1152,10 @@ function applyData() {
     // axios.post(`${urlPrefix}/saveData/${_dataType}`, sendData)
     axios.post(`${urlPrefix}/saveData`, DATA_REPO)
     .then(({ data }) => {
+
+        if (DELETE_FEATURES_ID.length > 0) {
+            DELETE_FEATURES_ID.forEach(v => deleteData(v, "LINK"));
+        }
 
         if (data) {
             clearing();
@@ -1122,7 +1178,6 @@ function deleteData(_id, _dataType) {
     })
     .then(({ data }) => {
 
-      console.log(data);
       if (data) {
         clearing();
       }
@@ -1170,6 +1225,7 @@ function clearing() {
         wkt = format.writeGeometry(displayZoneFeature.getGeometry());
     }
 
+    tempNodeSource.clear();
     source.clear();
 
     displayZoneFeature = null;
@@ -1214,27 +1270,25 @@ function wktUpdate() {
 
         _f.set("WKT", NEW_LINK_WKT);
 
-        const LINK_DATA_REPO = _f.get("LINK_DATA_REPO");
-        const FROM_NODE_DATA_REPO = LINK_DATA_REPO.FROM_NODE_DATA_REPO;
-        const TO_NODE_DATA_REPO = LINK_DATA_REPO.TO_NODE_DATA_REPO;
+        const LINK_DATA_REPO = JSON.parse(JSON.stringify(_f.get("LINK_DATA_REPO")));
+        console.log(LINK_DATA_REPO);
+        const FROM_NODE_DATA_REPO = JSON.parse(JSON.stringify(LINK_DATA_REPO.FROM_NODE_DATA_REPO));
+        const TO_NODE_DATA_REPO = JSON.parse(JSON.stringify(LINK_DATA_REPO.TO_NODE_DATA_REPO));
 
         LINK_DATA_REPO.WKT = NEW_LINK_WKT;
         FROM_NODE_DATA_REPO.WKT = NEW_FROM_NODE_WKT;
         TO_NODE_DATA_REPO.WKT = NEW_TO_NODE_WKT;
 
+        LINK_DATA_REPO.FROM_NODE_DATA_REPO = FROM_NODE_DATA_REPO;
+        LINK_DATA_REPO.TO_NODE_DATA_REPO = TO_NODE_DATA_REPO;
+
         _f.set("LINK_DATA_REPO", LINK_DATA_REPO);
-        _f.set("FROM_NODE_DATA_REPO", FROM_NODE_DATA_REPO);
-        _f.set("TO_NODE_DATA_REPO", TO_NODE_DATA_REPO);
     })
 }
 
 function allInteractionOff() {
-    if (draw && draw.getActive()) {
-        draw.setActive(false)
-    }
-    if (modify && modify.getActive()) {
-        modify.setActive(false)
-    }
+    map.removeInteraction(draw);
+    map.removeInteraction(modify);
 }
 
 function buttonStyleToggle(_dom) {

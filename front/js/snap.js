@@ -16,6 +16,7 @@ import { Icon, Text, Fill, Circle as CircleStyle, Stroke, Style, RegularShape } 
 import Point from 'ol/geom/Point';
 import MultiPoint from 'ol/geom/MultiPoint';
 import { platformModifierKeyOnly } from 'ol/events/condition';
+import * as olSphere from 'ol/sphere';
 
 // import BlueArrowImg from '../data/resize_blue_arrow.png';
 // import NormalArrowImg from '../data/resize_normal_arrow.png';
@@ -399,9 +400,17 @@ function initMap() {
 
         const intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
 
+        let dist = 999999999999999;
+
         intersect.forEach(function(v) {
             if (v.get("featureType") === "LINK") {
-                target = v;
+                // target = v;
+                const compareDist = olSphere.getDistance(coords, v.getGeometry().getCoordinateAt(0.5))
+                if (compareDist < dist) {
+                    // pickFeature = v;
+                    target = v;
+                    dist = compareDist;
+                }
             }
         })
 
@@ -779,26 +788,34 @@ function setNodeData(target) {
         return v.node_id === TO_NODE;
     })
 
-    const FROM_NODE_PROPS_FORM = {
-          NODE_ID: FROM_NODE_PROPS.node_id,
-          NODE_TYPE: FROM_NODE_PROPS.node_type,
-          NODE_NAME: FROM_NODE_PROPS.node_name,
-          TRAFFIC_LIGHT: FROM_NODE_PROPS.traffic_light,
-          DISTRICT_ID: FROM_NODE_PROPS.district_id,
-          DISTRICT_ID2: FROM_NODE_PROPS.district_id2
+    const LINK_DATA_REPO = LINK_PROPS.LINK_DATA_REPO;
+    if (LINK_DATA_REPO) {
+        return;
     }
 
-    const TO_NODE_PROPS_FORM = {
-          NODE_ID: TO_NODE_PROPS.node_id,
-          NODE_TYPE: TO_NODE_PROPS.node_type,
-          NODE_NAME: TO_NODE_PROPS.node_name,
-          TRAFFIC_LIGHT: TO_NODE_PROPS.traffic_light,
-          DISTRICT_ID: TO_NODE_PROPS.district_id,
-          DISTRICT_ID2: TO_NODE_PROPS.district_id2
+    if (FROM_NODE_PROPS) {
+        const FROM_NODE_PROPS_FORM = {
+              NODE_ID: FROM_NODE_PROPS.node_id,
+              NODE_TYPE: FROM_NODE_PROPS.node_type,
+              NODE_NAME: FROM_NODE_PROPS.node_name,
+              TRAFFIC_LIGHT: FROM_NODE_PROPS.traffic_light,
+              DISTRICT_ID: FROM_NODE_PROPS.district_id,
+              DISTRICT_ID2: FROM_NODE_PROPS.district_id2
+        }
+        LINK_PROPS.FROM_NODE_DATA_REPO = FROM_NODE_PROPS_FORM;
     }
 
-    LINK_PROPS.FROM_NODE_DATA_REPO = FROM_NODE_PROPS_FORM;
-    LINK_PROPS.TO_NODE_DATA_REPO = TO_NODE_PROPS_FORM;
+    if (TO_NODE_PROPS) {
+        const TO_NODE_PROPS_FORM = {
+              NODE_ID: TO_NODE_PROPS.node_id,
+              NODE_TYPE: TO_NODE_PROPS.node_type,
+              NODE_NAME: TO_NODE_PROPS.node_name,
+              TRAFFIC_LIGHT: TO_NODE_PROPS.traffic_light,
+              DISTRICT_ID: TO_NODE_PROPS.district_id,
+              DISTRICT_ID2: TO_NODE_PROPS.district_id2
+        }
+        LINK_PROPS.TO_NODE_DATA_REPO = TO_NODE_PROPS_FORM;
+    }
 
     target.set("LINK_DATA_REPO", LINK_PROPS);
 }
