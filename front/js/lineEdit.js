@@ -36,7 +36,6 @@ let LINK_DATA = null;
 let NODE_DATA = null;
 
 let CIRCLE_RADIUS = 0.0000005;
-let SPLIT_COUNT = 0;
 
 let map = null;
 
@@ -828,7 +827,6 @@ function addSplitInteraction() {
         const splittedLink = [firstLink, secondLink]
         select.getFeatures().extend(splittedLink);
 
-        SPLIT_COUNT = 1;
     })
 
     map.addInteraction(split)
@@ -1098,11 +1096,9 @@ function pushSaveData(target) {
     // const {FROM_NODE_DATA_REPO, TO_NODE_DATA_REPO, geometry, featureType, ...LINK_DATA_REPO} = JSON.parse(JSON.stringify(target.getProperties()));
     saveDataArchive.push(target.getId());
     saveDataArchive = Array.from(new Set(saveDataArchive));
-
-
-
-    console.log('--saveDataArchive--')
-    console.log(saveDataArchive);
+    saveDataArchive = saveDataArchive.filter(v => {
+        return source.getFeatureById(v) !== null;
+    })
 }
 
 function setGridData(target) {
@@ -1144,7 +1140,6 @@ function applyData() {
 
     const DATA_REPO = saveDataArchive.map(v => {
         const findFeature = source.getFeatureById(v);
-        console.log(v);
         const findFeaturesProps = findFeature.getProperties();
         return findFeaturesProps;
     })
@@ -1271,7 +1266,6 @@ function wktUpdate() {
         _f.set("WKT", NEW_LINK_WKT);
 
         const LINK_DATA_REPO = JSON.parse(JSON.stringify(_f.get("LINK_DATA_REPO")));
-        console.log(LINK_DATA_REPO);
         const FROM_NODE_DATA_REPO = JSON.parse(JSON.stringify(LINK_DATA_REPO.FROM_NODE_DATA_REPO));
         const TO_NODE_DATA_REPO = JSON.parse(JSON.stringify(LINK_DATA_REPO.TO_NODE_DATA_REPO));
 
