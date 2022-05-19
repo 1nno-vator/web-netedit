@@ -546,7 +546,7 @@ function addDrawBoxInteraction() {
 
     dragBox.on('boxend', function () {
       const extent = dragBox.getGeometry().getExtent();
-      const boxFeatures = source.getFeaturesInExtent(extent).filter((feature) => feature.getGeometry().intersectsExtent(extent));
+      const boxFeatures = source.getFeaturesInExtent(extent).filter((feature) => feature.getGeometry().intersectsExtent(extent)).filter(v => v.get("featureType") === "LINK");
       selectedFeatures.extend(boxFeatures);
     });
 
