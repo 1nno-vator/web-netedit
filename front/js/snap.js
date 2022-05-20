@@ -38,6 +38,8 @@ let CIRCLE_RADIUS = 0.0000005;
 
 let map = null;
 
+let GRID_SET_LINK_ID = null;
+
 const source = new VectorSource({
   features: new Collection(),
   wrapX: false
@@ -71,11 +73,18 @@ const styleFunction = function (feature) {
 
   const selectedFeaturesId = getSelectedFeaturesId();
 
+  const inputText = document.getElementById('search-feature').value;
+  const gridSetData = GRID_SET_LINK_ID;
+
   let styles = [
     // linestring
     new Style({
       stroke: new Stroke({
-        color: selectedFeaturesId.includes(feature.getId()) ? '#FFB2F5' : '#FFE400',
+        color: gridSetData === feature.getId()
+                ? '#C70039'
+                : (inputText === feature.getId() ? '#C70039'
+                    : (selectedFeaturesId.includes(feature.getId()) ? '#FFB2F5' : '#FFE400')
+                  ),
         width: selectedFeaturesId.includes(feature.getId()) ? 5 : 4,
       }),
       text: new Text({
@@ -398,18 +407,24 @@ function initMap() {
 
         const COORDS_CIRCLE = new Circle(coords, CIRCLE_RADIUS)
 
-        source.addFeature(new Feature(COORDS_CIRCLE));
+        // source.addFeature(new Feature(COORDS_CIRCLE));
 
         const intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
         console.log(intersect);
 
-        source.addFeature(new Feature(fromExtent(COORDS_CIRCLE.getExtent())));
+        // source.addFeature(new Feature(fromExtent(COORDS_CIRCLE.getExtent())));
 
         let dist = 999999999999999;
 
         intersect.forEach(function(v) {
             if (v.get("featureType") === "LINK") {
                 // target = v;
+                // const circleIntersectsExtent = COORDS_CIRCLE.intersectsExtent(v.getGeometry().getExtent());
+                // console.log('circleIntersectsExtent')
+                // console.log(circleIntersectsExtent);
+                //
+                // source.addFeature(new Feature(fromExtent(v.getGeometry().getExtent())));
+
                 const compareDist = olSphere.getDistance(coords, v.getGeometry().getCoordinateAt(0.5))
                 if (compareDist < dist) {
                     // pickFeature = v;
@@ -841,6 +856,8 @@ function setGridData(target) {
     FROM_NODE_GRID_INSTANCE.resetData(FROM_NODE_GRID_DATA);
     const TO_NODE_GRID_DATA = getGridData(TO_NODE_DATA_REPO, 'TO_NODE');
     TO_NODE_GRID_INSTANCE.resetData(TO_NODE_GRID_DATA);
+
+    GRID_SET_LINK_ID = target.get("LINK_ID");
 }
 
 function getGridData(_data, _dataType) {
@@ -991,6 +1008,9 @@ function wktUpdate() {
             LINK_DATA_REPO.TO_NODE_DATA_REPO = TO_NODE_DATA_REPO;
 
             _f.set("LINK_DATA_REPO", LINK_DATA_REPO);
+
+            console.log(LINK_DATA_REPO);
+
             _f.set("FROM_NODE_DATA_REPO", FROM_NODE_DATA_REPO);
             _f.set("TO_NODE_DATA_REPO", TO_NODE_DATA_REPO);
         }
