@@ -7,6 +7,7 @@ import com.web.netedit.util.NetworkUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -125,7 +126,7 @@ public class NetworkController {
     // after 0512
 
     @RequestMapping(value = "/linkByZoneWithNodeData", method = RequestMethod.POST)
-    public Map<String, Object> getLinkByZoneWithNodeData(@RequestBody Map paramMap) {
+    public Map<String, Object> getLinkByZoneWithNodeData(@RequestBody Map paramMap, HttpServletRequest httpServletRequest) {
         String wkt = (String) paramMap.get("wkt");
         List<String> sggCode = (List<String>) paramMap.get("sggCode");
 

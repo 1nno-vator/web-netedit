@@ -50,5 +50,6 @@ export let _mainMapView = new View({
   center: _centerCoords,
   zoom: 11,
   minZoom: 0,
-  maxZoom: 25
+  maxZoom: 25,
+  extent: [126.2361293862253, 37.23307430657232, 126.7906839699065, 37.82878486266399]
 })

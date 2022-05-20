@@ -398,7 +398,12 @@ function initMap() {
 
         const COORDS_CIRCLE = new Circle(coords, CIRCLE_RADIUS)
 
+        source.addFeature(new Feature(COORDS_CIRCLE));
+
         const intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
+        console.log(intersect);
+
+        source.addFeature(new Feature(fromExtent(COORDS_CIRCLE.getExtent())));
 
         let dist = 999999999999999;
 
@@ -868,6 +873,9 @@ function applyData() {
         const findFeaturesProps = findFeature.getProperties();
         return findFeaturesProps;
     })
+
+    console.log(select.getFeatures());
+    console.log(DATA_REPO);
 
     // axios.post(`${urlPrefix}/saveData/${_dataType}`, sendData)
     axios.post(`${urlPrefix}/saveData`, DATA_REPO)

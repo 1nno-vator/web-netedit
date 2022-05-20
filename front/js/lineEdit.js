@@ -30,6 +30,7 @@ import WKT from 'ol/format/WKT';
 import Grid from "tui-grid";
 import {Polygon} from "ol/geom";
 import Split from "ol-ext/interaction/Split";
+import * as olSphere from "ol/sphere";
 
 // global value
 let LINK_DATA = null;
@@ -424,9 +425,17 @@ function initMap() {
 
         const intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
 
+        let dist = 999999999999999;
+
         intersect.forEach(function(v) {
             if (v.get("featureType") === "LINK") {
-                target = v;
+                // target = v;
+                const compareDist = olSphere.getDistance(coords, v.getGeometry().getCoordinateAt(0.5))
+                if (compareDist < dist) {
+                    // pickFeature = v;
+                    target = v;
+                    dist = compareDist;
+                }
             }
         })
 
