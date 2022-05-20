@@ -440,6 +440,8 @@ function initMap() {
             setGridData(target);
         }
 
+        source.dispatchEvent('change');
+
     })
 }
 
