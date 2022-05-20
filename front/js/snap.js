@@ -370,6 +370,27 @@ function initMap() {
         geometry: displayZonePolygon
     })
 
+    map.on('click', function(evt) {
+        evt.preventDefault();
+        const pixel = map.getEventPixel(evt)
+        const coords = map.getEventCoordinate(evt);
+        let test = null;
+
+        map.forEachFeatureAtPixel(pixel, function(_f) {
+            if (_f.get("featureType") === "LINK") {
+                test = _f;
+            }
+        })
+
+        if (!test) {
+            LINK_GRID_INSTANCE.resetData([]);
+            FROM_NODE_GRID_INSTANCE.resetData([]);
+            TO_NODE_GRID_INSTANCE.resetData([]);
+            GRID_SET_LINK_ID = null;
+        }
+
+    })
+
     map.on('pointermove', function(e) {
         map.getTargetElement().style.cursor = map.hasFeatureAtPixel(e.pixel) ? 'pointer' : '';
     })
@@ -406,44 +427,52 @@ function initMap() {
         const selectedFeatures = select.getFeatures();
         const idMaps = selectedFeatures.getArray().map(v => v.getId());
 
-        const COORDS_CIRCLE = new Circle(coords, CIRCLE_RADIUS)
-
-        source.addFeature(new Feature(COORDS_CIRCLE));
-
-        const intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
-        console.log(intersect);
-
-        source.addFeature(new Feature(fromExtent(COORDS_CIRCLE.getExtent())));
-
-        let dist = 999999999999999;
-
-        intersect.forEach(function(v) {
-            if (v.get("featureType") === "LINK") {
-                // target = v;
-
-                v.getGeometry().forEachSegment(function(start, end) {
-                    let compareDist = olSphere.getDistance(coords, start)
-                    if (compareDist < dist) {
-                        target = v;
-                        dist = compareDist;
-                    }
-                    compareDist = olSphere.getDistance(coords, end);
-                    if (compareDist < dist) {
-                        target = v;
-                        dist = compareDist;
-                    }
-
-                    const segLine = new LineString([start, end]);
-                    const segLineCenterCoord = segLine.getCoordinateAt(0.5);
-                    compareDist = olSphere.getDistance(coords, segLineCenterCoord)
-                    if (compareDist < dist) {
-                        target = v;
-                        dist = compareDist;
-                    }
-                })
-
+        map.forEachFeatureAtPixel(pixel, function(_f) {
+            if (_f.get("featureType") === "LINK") {
+                target = _f;
             }
         })
+
+        if (!target) {
+
+            const COORDS_CIRCLE = new Circle(coords, CIRCLE_RADIUS)
+            // source.addFeature(new Feature(COORDS_CIRCLE));
+
+            const intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
+            // source.addFeature(new Feature(fromExtent(COORDS_CIRCLE.getExtent())));
+
+            let dist = 999999999999999;
+
+            intersect.forEach(function(v) {
+                if (v.get("featureType") === "LINK") {
+                    // target = v;
+
+                    v.getGeometry().forEachSegment(function(start, end) {
+                        let compareDist = olSphere.getDistance(coords, start)
+                        if (compareDist < dist) {
+                            target = v;
+                            dist = compareDist;
+                        }
+                        compareDist = olSphere.getDistance(coords, end);
+                        if (compareDist < dist) {
+                            target = v;
+                            dist = compareDist;
+                        }
+
+                        const segLine = new LineString([start, end]);
+                        const segLineCenterCoord = segLine.getCoordinateAt(0.5);
+                        compareDist = olSphere.getDistance(coords, segLineCenterCoord)
+                        if (compareDist < dist) {
+                            target = v;
+                            dist = compareDist;
+                        }
+                    })
+
+                }
+            })
+
+        }
+
 
         if (target) {
             setNodeData(target);
@@ -904,7 +933,6 @@ function applyData() {
         return findFeaturesProps;
     })
 
-    console.log(select.getFeatures());
     console.log(DATA_REPO);
 
     // axios.post(`${urlPrefix}/saveData/${_dataType}`, sendData)
@@ -1022,7 +1050,10 @@ function wktUpdate() {
 
             _f.set("LINK_DATA_REPO", LINK_DATA_REPO);
 
+            console.log('--WKT update')
             console.log(LINK_DATA_REPO);
+            console.log(FROM_NODE_DATA_REPO);
+            console.log(TO_NODE_DATA_REPO);
 
             _f.set("FROM_NODE_DATA_REPO", FROM_NODE_DATA_REPO);
             _f.set("TO_NODE_DATA_REPO", TO_NODE_DATA_REPO);
