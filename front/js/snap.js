@@ -387,6 +387,7 @@ function initMap() {
             FROM_NODE_GRID_INSTANCE.resetData([]);
             TO_NODE_GRID_INSTANCE.resetData([]);
             GRID_SET_LINK_ID = null;
+            source.dispatchEvent('change');
         }
 
     })
@@ -1009,10 +1010,11 @@ function clearing() {
         }
     }
 
-    getFeaturesByZone('');
+    getFeaturesByZone(wkt);
 
 
     select.getFeatures().clear();
+    GRID_SET_LINK_ID = null;
 }
 
 function getCheckValue() {
