@@ -28,6 +28,7 @@ import { fromExtent } from 'ol/geom/Polygon';
 import WKT from 'ol/format/WKT';
 import Grid from "tui-grid";
 import Circle from "ol/geom/Circle";
+import {LineString} from "ol/geom";
 
 
 // global value
@@ -407,30 +408,40 @@ function initMap() {
 
         const COORDS_CIRCLE = new Circle(coords, CIRCLE_RADIUS)
 
-        // source.addFeature(new Feature(COORDS_CIRCLE));
+        source.addFeature(new Feature(COORDS_CIRCLE));
 
         const intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
         console.log(intersect);
 
-        // source.addFeature(new Feature(fromExtent(COORDS_CIRCLE.getExtent())));
+        source.addFeature(new Feature(fromExtent(COORDS_CIRCLE.getExtent())));
 
         let dist = 999999999999999;
 
         intersect.forEach(function(v) {
             if (v.get("featureType") === "LINK") {
                 // target = v;
-                // const circleIntersectsExtent = COORDS_CIRCLE.intersectsExtent(v.getGeometry().getExtent());
-                // console.log('circleIntersectsExtent')
-                // console.log(circleIntersectsExtent);
-                //
-                // source.addFeature(new Feature(fromExtent(v.getGeometry().getExtent())));
 
-                const compareDist = olSphere.getDistance(coords, v.getGeometry().getCoordinateAt(0.5))
-                if (compareDist < dist) {
-                    // pickFeature = v;
-                    target = v;
-                    dist = compareDist;
-                }
+                v.getGeometry().forEachSegment(function(start, end) {
+                    let compareDist = olSphere.getDistance(coords, start)
+                    if (compareDist < dist) {
+                        target = v;
+                        dist = compareDist;
+                    }
+                    compareDist = olSphere.getDistance(coords, end);
+                    if (compareDist < dist) {
+                        target = v;
+                        dist = compareDist;
+                    }
+
+                    const segLine = new LineString([start, end]);
+                    const segLineCenterCoord = segLine.getCoordinateAt(0.5);
+                    compareDist = olSphere.getDistance(coords, segLineCenterCoord)
+                    if (compareDist < dist) {
+                        target = v;
+                        dist = compareDist;
+                    }
+                })
+
             }
         })
 
