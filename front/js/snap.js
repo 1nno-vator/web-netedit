@@ -738,7 +738,7 @@ function makeLinkFeatures(_data) {
         }
         continue;
     };
-    if (SHOW_EDIT_TY !== 'ALL' && (d.edit_ty === "" || !d.edit_ty)) {
+    if (SHOW_EDIT_TY !== 'ALL' && d.edit_ty !== "1") {
         let removeTarget = source.getFeatureById(d.link_id);
         if (removeTarget) {
             source.removeFeature(removeTarget)
