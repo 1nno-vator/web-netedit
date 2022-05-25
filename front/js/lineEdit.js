@@ -28,7 +28,7 @@ import UndoRedo from 'ol-ext/interaction/UndoRedo'
 import { fromExtent } from 'ol/geom/Polygon';
 import WKT from 'ol/format/WKT';
 import Grid from "tui-grid";
-import {Polygon} from "ol/geom";
+import {LineString, Polygon} from "ol/geom";
 import Split from "ol-ext/interaction/Split";
 import * as olSphere from "ol/sphere";
 
@@ -39,6 +39,8 @@ let NODE_DATA = null;
 let CIRCLE_RADIUS = 0.0000005;
 
 let map = null;
+
+let GRID_SET_LINK_ID = null;
 
 const tempNodeSource = new VectorSource();
 const tempLayer = new VectorLayer({
@@ -88,22 +90,29 @@ const styleFunction = function (feature) {
 
   const selectedFeaturesId = getSelectedFeaturesId();
 
-  let styles = [
-    // linestring
-    new Style({
-      stroke: new Stroke({
-        color: selectedFeaturesId.includes(feature.getId()) ? '#FFB2F5' : '#FFE400',
-        width: selectedFeaturesId.includes(feature.getId()) ? 5 : 4,
-      }),
-      text: new Text({
-        font: '8px Verdana',
-        text: selectedFeaturesId.includes(feature.getId()) ? feature.getId() : '',
-        fill: new Fill({ color: 'red' }),
-        stroke: new Stroke({ color: 'yellow', width: 3 })
-      }),
-      zIndex: 999
-    }),
-  ];
+  const inputText = document.getElementById('search-feature').value;
+  const gridSetData = GRID_SET_LINK_ID;
+
+    let styles = [
+        // linestring
+        new Style({
+          stroke: new Stroke({
+            color: gridSetData === feature.getId()
+                    ? '#C70039'
+                    : (inputText === feature.getId() ? '#C70039'
+                        : (selectedFeaturesId.includes(feature.getId()) ? '#FFB2F5' : '#FFE400')
+                      ),
+            width: selectedFeaturesId.includes(feature.getId()) ? 5 : 4,
+          }),
+          text: new Text({
+            font: '8px Verdana',
+            text: selectedFeaturesId.includes(feature.getId()) ? feature.getId() : '',
+            fill: new Fill({ color: 'red' }),
+            stroke: new Stroke({ color: 'yellow', width: 3 })
+          }),
+          zIndex: 999
+        }),
+      ];
 
   if (getZoomLevel() > 16) {
     let from = geometry.getFirstCoordinate();
@@ -429,13 +438,26 @@ function initMap() {
 
         intersect.forEach(function(v) {
             if (v.get("featureType") === "LINK") {
-                // target = v;
-                const compareDist = olSphere.getDistance(coords, v.getGeometry().getCoordinateAt(0.5))
-                if (compareDist < dist) {
-                    // pickFeature = v;
-                    target = v;
-                    dist = compareDist;
-                }
+                v.getGeometry().forEachSegment(function(start, end) {
+                    let compareDist = olSphere.getDistance(coords, start)
+                    if (compareDist < dist) {
+                        target = v;
+                        dist = compareDist;
+                    }
+                    compareDist = olSphere.getDistance(coords, end);
+                    if (compareDist < dist) {
+                        target = v;
+                        dist = compareDist;
+                    }
+
+                    const segLine = new LineString([start, end]);
+                    const segLineCenterCoord = segLine.getCoordinateAt(0.5);
+                    compareDist = olSphere.getDistance(coords, segLineCenterCoord)
+                    if (compareDist < dist) {
+                        target = v;
+                        dist = compareDist;
+                    }
+                })
             }
         })
 
@@ -457,6 +479,8 @@ function initMap() {
             }
 
         }
+
+        source.dispatchEvent('change');
 
     })
 }
@@ -538,6 +562,8 @@ function addSelectInteraction() {
             }
         });
 
+        source.dispatchEvent('change');
+
     })
 
     selectedFeatures.on('remove', function(value) {
@@ -545,6 +571,8 @@ function addSelectInteraction() {
             LINK_GRID_INSTANCE.resetData([]);
             FROM_NODE_GRID_INSTANCE.resetData([]);
             TO_NODE_GRID_INSTANCE.resetData([]);
+            GRID_SET_LINK_ID = null;
+            source.dispatchEvent('change');
         }
     })
 
@@ -797,7 +825,7 @@ function addSplitInteraction() {
         }
 
         firstLinkLinkDataRepo.UP_TO_NODE = splitNodeKey;
-        firstLinkLinkDataRepo.DWON_FROM_NODE = splitNodeKey;
+        firstLinkLinkDataRepo.DOWN_FROM_NODE = splitNodeKey;
 
         let firstLinkKey = firstLink.get("UP_FROM_NODE") + "_" + firstLink.get("UP_TO_NODE");
 
@@ -823,7 +851,7 @@ function addSplitInteraction() {
         }
 
         secondLinkLinkDataRepo.UP_FROM_NODE = splitNodeKey;
-        secondLinkLinkDataRepo.DWON_TO_NODE = splitNodeKey;
+        secondLinkLinkDataRepo.DOWN_TO_NODE = splitNodeKey;
 
         let secondLinkKey = secondLink.get("UP_FROM_NODE") + "_" + secondLink.get("UP_TO_NODE");
 
@@ -1126,6 +1154,8 @@ function setGridData(target) {
     FROM_NODE_GRID_INSTANCE.resetData(FROM_NODE_GRID_DATA);
     const TO_NODE_GRID_DATA = getGridData(TO_NODE_DATA_REPO, 'TO_NODE');
     TO_NODE_GRID_INSTANCE.resetData(TO_NODE_GRID_DATA);
+
+    GRID_SET_LINK_ID = target.get("LINK_ID");
 }
 
 function getGridData(_data, _dataType) {
@@ -1257,6 +1287,7 @@ function clearing() {
     }
 
     select.getFeatures().clear();
+    GRID_SET_LINK_ID = null;
 }
 
 function getCheckValue() {
