@@ -796,6 +796,9 @@ function addSplitInteraction() {
             WKT: wktFormat.writeGeometry(splitNode).replace("(", " (").replace(",",", ")
         }
 
+        firstLinkLinkDataRepo.UP_TO_NODE = splitNodeKey;
+        firstLinkLinkDataRepo.DWON_FROM_NODE = splitNodeKey;
+
         let firstLinkKey = firstLink.get("UP_FROM_NODE") + "_" + firstLink.get("UP_TO_NODE");
 
         firstLink.set("LINK_ID", firstLinkKey);
@@ -818,6 +821,9 @@ function addSplitInteraction() {
             DISTRICT_ID2: '',
             WKT: wktFormat.writeGeometry(splitNode).replace("(", " (").replace(",",", ")
         }
+
+        secondLinkLinkDataRepo.UP_FROM_NODE = splitNodeKey;
+        secondLinkLinkDataRepo.DWON_TO_NODE = splitNodeKey;
 
         let secondLinkKey = secondLink.get("UP_FROM_NODE") + "_" + secondLink.get("UP_TO_NODE");
 
