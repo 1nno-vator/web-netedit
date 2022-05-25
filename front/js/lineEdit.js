@@ -470,17 +470,19 @@ function initMap() {
 
             if (idMaps.includes(target.getId())) {
                 selectedFeatures.forEach((sf) => {
-                    if (sf.getId() === target.getId()) {
-                        selectedFeatures.remove(sf);
+                    if (sf && target) {
+                        if (sf.getId() === target.getId()) {
+                            selectedFeatures.remove(sf);
+                        }
                     }
                 })
             } else {
                 select.getFeatures().push(target);
             }
 
+            source.dispatchEvent('change');
         }
 
-        source.dispatchEvent('change');
 
     })
 }
@@ -869,7 +871,7 @@ function addSplitInteraction() {
 
         const splittedLink = [firstLink, secondLink]
         select.getFeatures().extend(splittedLink);
-
+        setGridData(firstLink);
     })
 
     map.addInteraction(split)

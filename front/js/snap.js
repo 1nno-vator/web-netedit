@@ -39,6 +39,8 @@ let CIRCLE_RADIUS = 0.0000005;
 
 let map = null;
 
+let SHOW_EDIT_TY = 'ALL';
+
 let GRID_SET_LINK_ID = null;
 
 const source = new VectorSource({
@@ -326,6 +328,21 @@ function domEventRegister() {
       })
     });
 
+    Hotkeys('ctrl+l', function(event, handler) {
+        // Prevent the default refresh event under WINDOWS system
+        event.preventDefault()
+        SHOW_EDIT_TY = 'ALL'
+        console.log(SHOW_EDIT_TY);
+        map.dispatchEvent('moveend');
+    })
+
+    Hotkeys('ctrl+k', function(event, handler) {
+        // Prevent the default refresh event under WINDOWS system
+        event.preventDefault()
+        SHOW_EDIT_TY = null;
+        console.log(SHOW_EDIT_TY);
+        map.dispatchEvent('moveend');
+    })
 
     Hotkeys('ctrl+s', function(event, handler) {
         // Prevent the default refresh event under WINDOWS system
@@ -479,6 +496,7 @@ function initMap() {
             setNodeData(target);
             pushSaveData(target);
             setGridData(target);
+            console.log(target.getProperties());
         }
 
         source.dispatchEvent('change');
@@ -714,13 +732,20 @@ function makeLinkFeatures(_data) {
   for (let i=0; i<dataLength; i++) {
     const d = _data[i];
     if (d.use_yn !== SHOW_USE_YN) {
-      let removeTarget = source.getFeatureById(d.link_id);
-      if (removeTarget) {
-        source.removeFeature(removeTarget)
-      }
-
-      continue;
+        let removeTarget = source.getFeatureById(d.link_id);
+        if (removeTarget) {
+            source.removeFeature(removeTarget)
+        }
+        continue;
     };
+    if (SHOW_EDIT_TY !== 'ALL' && (d.edit_ty === "" || !d.edit_ty)) {
+        let removeTarget = source.getFeatureById(d.link_id);
+        if (removeTarget) {
+            source.removeFeature(removeTarget)
+        }
+        continue;
+    }
+
     let _feature = format.readFeature(d.wkt,  {
       dataProjection: 'EPSG:4326',
       featureProjection: 'EPSG:4326'
