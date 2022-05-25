@@ -326,16 +326,6 @@ function domEventRegister() {
         }
     })
 
-    Hotkeys('ctrl+q', function(event, handler) {
-        // Prevent the default refresh event under WINDOWS system
-        event.preventDefault()
-    })
-
-    Hotkeys('ctrl+w', function(event, handler) {
-        // Prevent the default refresh event under WINDOWS system
-        event.preventDefault()
-    })
-
     Hotkeys('ctrl+s', function(event, handler) {
         // Prevent the default refresh event under WINDOWS system
         event.preventDefault()
@@ -370,6 +360,21 @@ function domEventRegister() {
         }
 
 
+    })
+
+    Hotkeys('ctrl+a', function(event, handler) {
+        // Prevent the default refresh event under WINDOWS system
+        event.preventDefault()
+        const selectedFeatures = select.getFeatures();
+        selectedFeatures.forEach(function(value) {
+            const target = value;
+            if (target.get("featureType") === "LINK") {
+                target.set("EDIT_TY", "1");
+                const LINK_DATA_REPO = target.get("LINK_DATA_REPO");
+                LINK_DATA_REPO.EDIT_TY = "1";
+                target.set("LINK_DATA_REPO", LINK_DATA_REPO);
+            }
+        });
     })
 }
 
@@ -471,9 +476,9 @@ function initMap() {
             if (idMaps.includes(target.getId())) {
                 selectedFeatures.forEach((sf) => {
                     if (sf && target) {
-                        if (sf.getId() === target.getId()) {
-                            selectedFeatures.remove(sf);
-                        }
+                        // if (sf.getId() === target.getId()) {
+                        //     selectedFeatures.remove(sf);
+                        // }
                     }
                 })
             } else {
@@ -583,8 +588,8 @@ function addSelectInteraction() {
 
 function addModifyInteraction() {
     modify = new Modify({
-        // features: select.getFeatures(),
-        source: source,
+        features: select.getFeatures(),
+        // source: select.getSource(),
         pixelTolerance: 15,
         wrapX: false
     });
@@ -811,6 +816,8 @@ function addSplitInteraction() {
         let firstLinkLinkDataRepo = JSON.parse(JSON.stringify(firstLink.get("LINK_DATA_REPO")));
         let secondLinkLinkDataRepo = JSON.parse(JSON.stringify(secondLink.get("LINK_DATA_REPO")));
 
+        const originLinkId = e.original.get("LINK_ID");
+
         firstLink.set("UP_TO_NODE", splitNodeKey);
         firstLink.set("DOWN_FROM_NODE", splitNodeKey);
         firstLink.set("WKT", wktFormat.writeGeometry(firstLink.getGeometry()).replace("(", " (").replace(",",", "))
@@ -829,7 +836,16 @@ function addSplitInteraction() {
         firstLinkLinkDataRepo.UP_TO_NODE = splitNodeKey;
         firstLinkLinkDataRepo.DOWN_FROM_NODE = splitNodeKey;
 
-        let firstLinkKey = firstLink.get("UP_FROM_NODE") + "_" + firstLink.get("UP_TO_NODE");
+        let newLinkIdPrefix;
+
+        if (originLinkId.indexOf("_") > -1) {
+            newLinkIdPrefix = originLinkId
+        } else {
+            newLinkIdPrefix = originLinkId + "_"
+        }
+
+        // let firstLinkKey = firstLink.get("UP_FROM_NODE") + "_" + firstLink.get("UP_TO_NODE");
+        let firstLinkKey = newLinkIdPrefix + "01";
 
         firstLink.set("LINK_ID", firstLinkKey);
         firstLink.setId(firstLink.get("LINK_ID"));
@@ -855,7 +871,8 @@ function addSplitInteraction() {
         secondLinkLinkDataRepo.UP_FROM_NODE = splitNodeKey;
         secondLinkLinkDataRepo.DOWN_TO_NODE = splitNodeKey;
 
-        let secondLinkKey = secondLink.get("UP_FROM_NODE") + "_" + secondLink.get("UP_TO_NODE");
+        // let secondLinkKey = secondLink.get("UP_FROM_NODE") + "_" + secondLink.get("UP_TO_NODE");
+        let secondLinkKey = newLinkIdPrefix + "02";
 
         secondLink.set("LINK_ID", secondLinkKey);
         secondLink.setId(secondLink.get("LINK_ID"));

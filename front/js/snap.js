@@ -823,6 +823,12 @@ function setGridEditable() {
       const LINK_ID = LINK_GRID_DATA.find(v => v.name === "LINK_ID").value;
       const feature = source.getFeatureById(LINK_ID);
       const featureRepo = feature.get("LINK_DATA_REPO");
+
+      console.log(feature.getProperties());
+      console.log(featureRepo);
+
+      console.log(changeColumnName);
+
       featureRepo[changeColumnName] = changeValue;
       feature.set(changeColumnName, changeValue);
       feature.set("LINK_DATA_REPO", featureRepo);
