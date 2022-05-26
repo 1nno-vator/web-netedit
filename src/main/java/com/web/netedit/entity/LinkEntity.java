@@ -66,9 +66,11 @@ public class LinkEntity {
             this.DOWN_LANES = _linkEntity.DOWN_LANES;
         }
 
-        if (!_linkEntity.EDIT_TY.equals("") && _linkEntity.EDIT_TY != null) {
-            this.EDIT_TY = _linkEntity.EDIT_TY;
-        }
+//        if (!_linkEntity.EDIT_TY.equals("") && _linkEntity.EDIT_TY != null) {
+//            this.EDIT_TY = _linkEntity.EDIT_TY;
+//        }
+
+        this.EDIT_TY = _linkEntity.EDIT_TY;
 
         if (!_linkEntity.ROAD_NAME.equals("") && _linkEntity.ROAD_NAME != null) {
             this.ROAD_NAME = _linkEntity.ROAD_NAME;
