@@ -42,7 +42,6 @@ public class NetworkController {
     public List<Map<String, Object>> getLinkByZone(@RequestBody Map paramMap) {
         String wkt = (String) paramMap.get("wkt");
         List<String> sggCode = (List<String>) paramMap.get("sggCode");
-        System.out.println(sggCode);
         return networkService.getLinkByZone(wkt, sggCode);
     }
 
@@ -99,8 +98,6 @@ public class NetworkController {
 
     @RequestMapping(value = "/saveData/{dataType}", method = RequestMethod.POST)
     public List<Map<String, Object>> saveData(@RequestBody Map paramMap, @PathVariable(value = "dataType") String dataType) {
-        System.out.println(paramMap);
-        System.out.println(dataType);
         List<Map<String, Object>> result = new ArrayList<>();
         return result;
     }
@@ -117,8 +114,6 @@ public class NetworkController {
     public Map<String, Object> deleteData(@RequestBody Map map) {
         String id = (String) map.get("id");
         String dataType = (String) map.get("dataType");
-        System.out.println(id);
-        System.out.println(dataType);
 
         return networkService.deleteData(id, dataType);
     }

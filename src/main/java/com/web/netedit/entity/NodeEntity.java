@@ -31,25 +31,23 @@ public class NodeEntity {
 
     public void setAll(NodeEntity _nodeEntity) {
 
-        System.out.println(_nodeEntity.toString());
-
-        if (!_nodeEntity.NODE_TYPE.equals("") && _nodeEntity.NODE_TYPE != null) {
+        if (_nodeEntity.NODE_TYPE != null) {
             this.NODE_TYPE = _nodeEntity.NODE_TYPE;
         }
 
-        if (!_nodeEntity.TRAFFIC_LIGHT.equals("") && _nodeEntity.TRAFFIC_LIGHT != null) {
+        if (_nodeEntity.TRAFFIC_LIGHT != null) {
             this.TRAFFIC_LIGHT = _nodeEntity.TRAFFIC_LIGHT;
         }
 
-        if (!_nodeEntity.NODE_NAME.equals("") && _nodeEntity.NODE_NAME != null) {
+        if (_nodeEntity.NODE_NAME != null) {
             this.NODE_NAME = _nodeEntity.NODE_NAME;
         }
 
-        if (!_nodeEntity.DISTRICT_ID.equals("") && _nodeEntity.DISTRICT_ID != null) {
+        if (_nodeEntity.DISTRICT_ID != null) {
             this.DISTRICT_ID = _nodeEntity.DISTRICT_ID;
         }
 
-        if (!_nodeEntity.DISTRICT_ID2.equals("") && _nodeEntity.DISTRICT_ID2 != null) {
+        if (_nodeEntity.DISTRICT_ID2 != null) {
             this.DISTRICT_ID2 = _nodeEntity.DISTRICT_ID2;
         }
 

@@ -31,7 +31,6 @@ public class NetworkDAO {
 
     public List<Map<String, Object>> getLinkByZone(Map map) {
         String queryId = "getLinkByZone";
-        System.out.println(map);
         return sqlSessionTemplate.selectList(NAMESPACE + queryId, map);
     }
 

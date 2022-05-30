@@ -786,6 +786,7 @@ function addDrawInteraction() {
         drawFeature.set("LINK_DATA_REPO", LINK_DATA_REPO);
 
         console.log(drawFeature.getProperties());
+        console.log(drawFeature.getId());
 
         select.getFeatures().push(drawFeature);
         setGridData(drawFeature);
@@ -1156,11 +1157,15 @@ function setNodeData(target) {
 
 function pushSaveData(target) {
     // const {FROM_NODE_DATA_REPO, TO_NODE_DATA_REPO, geometry, featureType, ...LINK_DATA_REPO} = JSON.parse(JSON.stringify(target.getProperties()));
-    saveDataArchive.push(target.getId());
-    saveDataArchive = Array.from(new Set(saveDataArchive));
-    saveDataArchive = saveDataArchive.filter(v => {
-        return source.getFeatureById(v) !== null;
-    })
+    setTimeout(() => {
+
+        saveDataArchive.push(target.getId());
+        saveDataArchive = Array.from(new Set(saveDataArchive));
+        saveDataArchive = saveDataArchive.filter(v => {
+            return source.getFeatureById(v) !== null;
+        })
+
+    }, 10)
 }
 
 function setGridData(target) {
@@ -1207,6 +1212,9 @@ function applyData() {
         const findFeaturesProps = findFeature.getProperties();
         return findFeaturesProps;
     })
+
+    console.log(saveDataArchive);
+    console.log(DATA_REPO);
 
     // axios.post(`${urlPrefix}/saveData/${_dataType}`, sendData)
     axios.post(`${urlPrefix}/saveData`, DATA_REPO)

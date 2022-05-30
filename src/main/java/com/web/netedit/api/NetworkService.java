@@ -35,7 +35,6 @@ public class NetworkService {
 
     public List<Map<String, Object>> getLinkByZone(String wkt, List<String> sggCode) {
         Map<String, Object> map = new HashMap<>();
-        System.out.println(wkt);
         map.put("WKT", wkt);
         map.put("SGG_CODE", sggCode);
         return networkDAO.getLinkByZone(map);
@@ -43,7 +42,6 @@ public class NetworkService {
 
     public List<Map<String, Object>> getNodeByLink(String wkt, List<String> sggCode) {
         Map<String, Object> map = new HashMap<>();
-        System.out.println(wkt);
         map.put("WKT", wkt);
         map.put("SGG_CODE", sggCode);
         return networkDAO.getNodeByZone(map);
@@ -51,9 +49,7 @@ public class NetworkService {
 
     public List<Map<String, Object>> getNode(String _fromNode, String _toNode) {
         Map<String, Object> map = new HashMap<>();
-        System.out.println(_fromNode);
         map.put("FROM_NODE", _fromNode);
-        System.out.println(_toNode);
         map.put("TO_NODE", _toNode);
         return networkDAO.getNode(map);
     }
@@ -112,7 +108,6 @@ public class NetworkService {
         List<NodeEntity> nodeEntityList = new ArrayList<>();
 
         for (String node : nodes) {
-            System.out.println(node);
             Optional<NodeEntity> nodeEntity = nodeRepository.findById(node);
             if (nodeEntity.isPresent()) {
                 nodeEntityList.add(nodeEntity.get());
@@ -157,6 +152,5 @@ public class NetworkService {
 
     public void updateGeometry() {
         int updateRows = networkDAO.updateGeometry();
-        System.out.println("updateRows: " + updateRows);
     }
 }
