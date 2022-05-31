@@ -96,9 +96,11 @@ public class LinkEntity {
 
         this.WKT = _linkEntity.WKT;
 
-        this.USE_YN = _linkEntity.USE_YN != null ? _linkEntity.USE_YN : "Y";
-
-
+        if (_linkEntity.USE_YN.equals("Y")) {
+            this.USE_YN = "Y";
+        } else {
+            this.USE_YN = "N";
+        }
 
     }
 }

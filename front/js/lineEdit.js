@@ -1382,6 +1382,7 @@ function clearing() {
     source.clear();
 
     displayZoneFeature = null;
+    DELETE_FEATURES_ID = [];
 
     if (getZoomLevel() > 16) {
         let nowDisplayExtent = getExtent();
