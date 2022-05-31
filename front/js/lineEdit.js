@@ -496,7 +496,7 @@ function initGrid() {
 
   LINK_GRID_INSTANCE = new Grid({
     el: document.getElementById('link-grid'), // Container element
-    rowHeight: 20,
+    rowHeight: 30,
     minRowHeight: 0,
     scrollX: false,
     minBodyHeight: 450,
