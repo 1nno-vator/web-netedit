@@ -496,12 +496,11 @@ function initGrid() {
 
   LINK_GRID_INSTANCE = new Grid({
     el: document.getElementById('link-grid'), // Container element
-    rowHeight: 30,
+    rowHeight: 20,
     minRowHeight: 0,
     scrollX: false,
-    scrollY: false,
-    minBodyHeight: 380,
-    bodyHeight: 380,
+    minBodyHeight: 450,
+    bodyHeight: 450,
     columns: DEFAULT_COLUMN
   });
 
@@ -666,9 +665,13 @@ function addDrawInteraction() {
             'DOWN_LANES': '',
             'FIRST_DO': '',
             'FIRST_GU': '',
-            'LEFT_TURN_TYPE': '',
-            'EX_POCKET': '',
+            'LANE_CHANGE': '',
+            'EX_POCKET_NUM': '',
             'IS_CHANGE_LANES': '',
+            'USER_1': '',
+            'USER_2': '',
+            'USER_3': '',
+            'USER_4': '',
             'WKT': wktFormat.writeGeometry(drawFeature.getGeometry()).replace("(", " (").replace(",",", ")
         })
         drawFeature.setId(drawFeature.get("LINK_ID"));
@@ -1087,9 +1090,13 @@ function makeLinkFeatures(_data) {
       'EDIT_TY': d.edit_ty || '',
       'FIRST_DO': d.first_do || '',
       'FIRST_GU': d.first_gu || '',
-      'LEFT_TURN_TYPE': d.left_turn_type || '',
-      'EX_POCKET': d.ex_pocket || '',
+      'LANE_CHANGE': d.lane_change || '',
+      'EX_POCKET_NUM': d.ex_pocket_num || '',
       'IS_CHANGE_LANES': d.is_change_lanes || '',
+      'USER_1': d.user_1 || '',
+      'USER_2': d.user_2 || '',
+      'USER_3': d.user_3 || '',
+      'USER_4': d.user_4 || '',
       'WKT': d.wkt
     })
     if (NODE_DATA) {

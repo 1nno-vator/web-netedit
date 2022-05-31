@@ -33,12 +33,17 @@ public class LinkEntity {
     private String ROAD_NAME;
     private String FIRST_DO;
     private String FIRST_GU;
-    private String LEFT_TURN_TYPE;
-    private String EX_POCKET;
+    private String LANE_CHANGE;
+    private String EX_POCKET_NUM;
     private String IS_CHANGE_LANES;
     private String WKT;
 
     private String USE_YN;
+
+    private String USER_1;
+    private String USER_2;
+    private String USER_3;
+    private String USER_4;
 
     public void setAll(LinkEntity _linkEntity) {
 
@@ -82,12 +87,12 @@ public class LinkEntity {
             this.FIRST_GU = _linkEntity.FIRST_GU;
         }
 
-        if (_linkEntity.LEFT_TURN_TYPE != null) {
-            this.LEFT_TURN_TYPE = _linkEntity.LEFT_TURN_TYPE;
+        if (_linkEntity.LANE_CHANGE != null) {
+            this.LANE_CHANGE = _linkEntity.LANE_CHANGE;
         }
 
-        if (_linkEntity.EX_POCKET != null) {
-            this.EX_POCKET = _linkEntity.EX_POCKET;
+        if (_linkEntity.EX_POCKET_NUM != null) {
+            this.EX_POCKET_NUM = _linkEntity.EX_POCKET_NUM;
         }
 
         if (_linkEntity.IS_CHANGE_LANES != null) {
@@ -100,6 +105,22 @@ public class LinkEntity {
             this.USE_YN = "Y";
         } else {
             this.USE_YN = "N";
+        }
+
+        if (_linkEntity.USER_1 != null) {
+            this.USER_1 = _linkEntity.USER_1;
+        }
+
+        if (_linkEntity.USER_2 != null) {
+            this.USER_2 = _linkEntity.USER_2;
+        }
+
+        if (_linkEntity.USER_3 != null) {
+            this.USER_3 = _linkEntity.USER_3;
+        }
+
+        if (_linkEntity.USER_4 != null) {
+            this.USER_4 = _linkEntity.USER_4;
         }
 
     }
