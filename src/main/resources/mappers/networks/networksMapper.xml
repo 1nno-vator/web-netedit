@@ -41,7 +41,6 @@
         	, FIRST_GU
         	, LANE_CHANGE
         	, EX_POCKET_NUM
-        	, IS_CHANGE_LANES
             , WKT
             , USE_YN
             , USER_1
@@ -166,7 +165,6 @@
             , FIRST_GU
             , LANE_CHANGE
             , EX_POCKET_NUM
-            , IS_CHANGE_LANES
             , WKT
             , USE_YN
             , USER_1

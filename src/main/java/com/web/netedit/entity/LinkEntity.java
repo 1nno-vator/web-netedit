@@ -35,7 +35,6 @@ public class LinkEntity {
     private String FIRST_GU;
     private String LANE_CHANGE;
     private String EX_POCKET_NUM;
-    private String IS_CHANGE_LANES;
     private String WKT;
 
     private String USE_YN;
@@ -93,10 +92,6 @@ public class LinkEntity {
 
         if (_linkEntity.EX_POCKET_NUM != null) {
             this.EX_POCKET_NUM = _linkEntity.EX_POCKET_NUM;
-        }
-
-        if (_linkEntity.IS_CHANGE_LANES != null) {
-            this.IS_CHANGE_LANES = _linkEntity.IS_CHANGE_LANES;
         }
 
         this.WKT = _linkEntity.WKT;

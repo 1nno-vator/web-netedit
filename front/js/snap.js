@@ -764,9 +764,8 @@ function makeLinkFeatures(_data) {
       'EDIT_TY': d.edit_ty || '',
       'FIRST_DO': d.first_do || '',
       'FIRST_GU': d.first_gu || '',
-      'LEFT_TURN_TYPE': d.left_turn_type || '',
-      'EX_POCKET': d.ex_pocket || '',
-      'IS_CHANGE_LANES': d.is_change_lanes || '',
+      'LANE_CHANGE': d.lane_change || '',
+      'EX_POCKET_NUM': d.ex_pocket_num || '',
       'WKT': d.wkt
     })
     source.addFeature(_feature);
