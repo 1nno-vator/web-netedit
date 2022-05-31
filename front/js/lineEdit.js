@@ -713,36 +713,120 @@ function addDrawInteraction() {
 
         }
 
-        const FROM_COORDS_CIRCLE = new Circle(firstCoords, CIRCLE_RADIUS)
-        const TO_COORDS_CIRCLE = new Circle(lastCoords, CIRCLE_RADIUS)
 
-        const intersectFromNode = tempNodeSource.getFeaturesInExtent(FROM_COORDS_CIRCLE.getExtent());
-        const intersectToNode = tempNodeSource.getFeaturesInExtent(TO_COORDS_CIRCLE.getExtent());
+        const FIRST_COORDS_CIRCLE = new Circle(firstCoords, CIRCLE_RADIUS)
+        const FIRST_CIRCLE_INTERSECT = tempNodeSource.getFeaturesInExtent(FIRST_COORDS_CIRCLE.getExtent());
+        const LAST_COORDS_CIRCLE = new Circle(lastCoords, CIRCLE_RADIUS)
+        const LAST_CIRCLE_INTERSECT = tempNodeSource.getFeaturesInExtent(LAST_COORDS_CIRCLE.getExtent());
+
+        let dist = 15;
+
+        let first, last;
+
+        FIRST_CIRCLE_INTERSECT.forEach(function(v) {
+            let compareDist = olSphere.getDistance(firstCoords, v.getGeometry().getCoordinates())
+            if (compareDist < dist) {
+                first = v;
+                dist = compareDist;
+            }
+        })
+
+        dist = 15;
+
+        LAST_CIRCLE_INTERSECT.forEach(function(v) {
+            let compareDist = olSphere.getDistance(lastCoords, v.getGeometry().getCoordinates())
+            if (compareDist < dist) {
+                last = v;
+                dist = compareDist;
+            }
+        })
+
+         ////////////////
 
         let FROM_NODE_PROPS, TO_NODE_PROPS;
 
-        if (intersectFromNode.length > 0 && intersectToNode.length > 0) { // 기노드 간 연결
+        // if (intersectFromNode.length > 0 && intersectToNode.length > 0) { // 기노드 간 연결
+        //     console.log('기존재 노드 간 연결')
+        //     FROM_NODE_PROPS = intersectFromNode[0].getProperties();
+        //     TO_NODE_PROPS = intersectToNode[0].getProperties();
+        //
+        //     console.log(FROM_NODE_PROPS);
+        //     console.log(TO_NODE_PROPS);
+        // } else if (intersectFromNode.length > 0 || intersectToNode.length > 0) {
+        //     console.log('하나만 기존재 노드');
+        //
+        //     const NODE_DATA_REPO_TEMPLATE = {
+        //         DATA_TYPE: intersectToNode.length > 0 ? 'FROM' : 'TO',
+        //         NODE_ID: intersectToNode.length > 0 ? "CFN" + makeTimeKey() : "CTN" + makeTimeKey(),
+        //         NODE_TYPE: '',
+        //         NODE_NAME: '',
+        //         TRAFFIC_LIGHT: '',
+        //         DISTRICT_ID: '',
+        //         DISTRICT_ID2: ''
+        //     }
+        //
+        //     FROM_NODE_PROPS = intersectFromNode.length > 0 ? intersectFromNode[0].getProperties() : NODE_DATA_REPO_TEMPLATE;
+        //     TO_NODE_PROPS = intersectToNode.length > 0 ? intersectToNode[0].getProperties() : NODE_DATA_REPO_TEMPLATE;
+        //
+        //     console.log(FROM_NODE_PROPS);
+        //     console.log(TO_NODE_PROPS);
+        // } else {
+        //     console.log('둘 다 신규노드')
+        //
+        //     FROM_NODE_PROPS = {
+        //         DATA_TYPE: 'FROM',
+        //         NODE_ID: "CFN" + makeTimeKey(),
+        //         NODE_TYPE: '',
+        //         NODE_NAME: '',
+        //         TRAFFIC_LIGHT: '',
+        //         DISTRICT_ID: '',
+        //         DISTRICT_ID2: ''
+        //     }
+        //
+        //     TO_NODE_PROPS = {
+        //         DATA_TYPE: 'TO',
+        //         NODE_ID: "CTN" + makeTimeKey(),
+        //         NODE_TYPE: '',
+        //         NODE_NAME: '',
+        //         TRAFFIC_LIGHT: '',
+        //         DISTRICT_ID: '',
+        //         DISTRICT_ID2: ''
+        //     }
+        //
+        //     console.log(FROM_NODE_PROPS);
+        //     console.log(TO_NODE_PROPS);
+        // }
+
+        if (first && last) { // 기노드 간 연결
             console.log('기존재 노드 간 연결')
-            FROM_NODE_PROPS = intersectFromNode[0].getProperties();
-            TO_NODE_PROPS = intersectToNode[0].getProperties();
+            FROM_NODE_PROPS = first.getProperties();
+            TO_NODE_PROPS = last.getProperties();
 
             console.log(FROM_NODE_PROPS);
             console.log(TO_NODE_PROPS);
-        } else if (intersectFromNode.length > 0 || intersectToNode.length > 0) {
+        } else if (first || last) {
             console.log('하나만 기존재 노드');
 
+            let target;
+            if (first) {
+                target = first.getGeometry();
+            } else {
+                target = last.getGeometry();
+            }
+
             const NODE_DATA_REPO_TEMPLATE = {
-                DATA_TYPE: intersectToNode.length > 0 ? 'FROM' : 'TO',
-                NODE_ID: intersectToNode.length > 0 ? "CFN" + makeTimeKey() : "CTN" + makeTimeKey(),
+                DATA_TYPE: first ? 'FROM' : 'TO',
+                NODE_ID: last ? "CFN" + makeTimeKey() : "CTN" + makeTimeKey(),
                 NODE_TYPE: '',
                 NODE_NAME: '',
                 TRAFFIC_LIGHT: '',
                 DISTRICT_ID: '',
-                DISTRICT_ID2: ''
+                DISTRICT_ID2: '',
+                WKT: wktFormat.writeGeometry(target).replace("(", " (").replace(",",", ")
             }
 
-            FROM_NODE_PROPS = intersectFromNode.length > 0 ? intersectFromNode[0].getProperties() : NODE_DATA_REPO_TEMPLATE;
-            TO_NODE_PROPS = intersectToNode.length > 0 ? intersectToNode[0].getProperties() : NODE_DATA_REPO_TEMPLATE;
+            FROM_NODE_PROPS = first ? first.getProperties() : NODE_DATA_REPO_TEMPLATE;
+            TO_NODE_PROPS = last ? last.getProperties() : NODE_DATA_REPO_TEMPLATE;
 
             console.log(FROM_NODE_PROPS);
             console.log(TO_NODE_PROPS);
@@ -756,7 +840,8 @@ function addDrawInteraction() {
                 NODE_NAME: '',
                 TRAFFIC_LIGHT: '',
                 DISTRICT_ID: '',
-                DISTRICT_ID2: ''
+                DISTRICT_ID2: '',
+                WKT: wktFormat.writeGeometry(new Point(drawFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
             }
 
             TO_NODE_PROPS = {
@@ -766,7 +851,8 @@ function addDrawInteraction() {
                 NODE_NAME: '',
                 TRAFFIC_LIGHT: '',
                 DISTRICT_ID: '',
-                DISTRICT_ID2: ''
+                DISTRICT_ID2: '',
+                WKT: wktFormat.writeGeometry(new Point(drawFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
             }
 
             console.log(FROM_NODE_PROPS);
