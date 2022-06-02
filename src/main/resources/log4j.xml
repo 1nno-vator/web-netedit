@@ -29,10 +29,10 @@
         <Logger name="jdbc" level="error" additivity="false">
             <AppenderRef ref="Console" />
         </Logger>
-        <Logger name="jdbc.sqlonly" level="info" additivity="false">
+        <Logger name="jdbc.sqlonly" level="off" additivity="false">
             <AppenderRef ref="Console" />
         </Logger>
-        <Logger name="jdbc.sqltiming" level="info" additivity="false">
+        <Logger name="jdbc.sqltiming" level="off" additivity="false">
             <AppenderRef ref="Console" />
         </Logger>
         <Logger name="jdbc.audit" level="error" additivity="false">
