@@ -29,6 +29,7 @@ import WKT from 'ol/format/WKT';
 import Grid from "tui-grid";
 import Circle from "ol/geom/Circle";
 import {LineString} from "ol/geom";
+import LayerSwitcher from "ol-layerswitcher";
 
 
 // global value
@@ -306,10 +307,12 @@ document.addEventListener('DOMContentLoaded', function() {
 function domEventRegister() {
     document.getElementById('UNDO_BTN').addEventListener('click', (e) => {
         undoInteraction.undo();
+        wktUpdate();
     })
 
     document.getElementById('REDO_BTN').addEventListener('click', (e) => {
         undoInteraction.redo();
+        wktUpdate();
     })
 
     document.getElementById('SAVE_BTN').addEventListener('click', (e) => {
@@ -378,6 +381,11 @@ function initMap() {
         view: common._mainMapView,
         loadTilesWhileAnimating: true
     });
+
+    let layerSwitcher = new LayerSwitcher({
+        groupSelectStyle: 'children' // Can be 'children' [default], 'group' or 'none'
+    });
+    map.addControl(layerSwitcher);
 
     let nowDisplayExtent = getExtent();
 

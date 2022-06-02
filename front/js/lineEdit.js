@@ -31,6 +31,7 @@ import Grid from "tui-grid";
 import {LineString, Polygon} from "ol/geom";
 import Split from "ol-ext/interaction/Split";
 import * as olSphere from "ol/sphere";
+import LayerSwitcher from "ol-layerswitcher";
 
 // global value
 let LINK_DATA = null;
@@ -246,10 +247,12 @@ document.addEventListener('DOMContentLoaded', function() {
 function domEventRegister() {
     document.getElementById('UNDO_BTN').addEventListener('click', (e) => {
         undoInteraction.undo();
+        wktUpdate();
     })
 
     document.getElementById('REDO_BTN').addEventListener('click', (e) => {
         undoInteraction.redo();
+        wktUpdate();
     })
 
     document.getElementById('SAVE_BTN').addEventListener('click', (e) => {
@@ -376,6 +379,12 @@ function domEventRegister() {
             }
         });
     })
+
+    Hotkeys('ctrl+z', function(event, handler) {
+        // Prevent the default refresh event under WINDOWS system
+        event.preventDefault()
+        undoInteraction.undo();
+    })
 }
 
 function initMap() {
@@ -391,6 +400,11 @@ function initMap() {
         view: common._mainMapView,
         loadTilesWhileAnimating: true
     });
+
+    let layerSwitcher = new LayerSwitcher({
+        groupSelectStyle: 'children' // Can be 'children' [default], 'group' or 'none'
+    });
+    map.addControl(layerSwitcher);
 
     let nowDisplayExtent = getExtent();
 
