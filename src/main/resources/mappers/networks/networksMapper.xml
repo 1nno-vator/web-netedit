@@ -22,6 +22,7 @@
             , USER_2
             , USER_3
             , USER_4
+            , LEFT_TURN_UP_DOWN
         FROM NETEDIT_MS_LINK_2020
     </select>
 
@@ -47,6 +48,7 @@
             , USER_2
             , USER_3
             , USER_4
+            , LEFT_TURN_UP_DOWN
         FROM NETEDIT_MS_LINK_2020
         WHERE 1=1
         <choose>
@@ -171,6 +173,7 @@
             , USER_2
             , USER_3
             , USER_4
+            , LEFT_TURN_UP_DOWN
         FROM NETEDIT_MS_LINK_2020
         WHERE LINK_ID = #{FEATURE_ID}
     </select>

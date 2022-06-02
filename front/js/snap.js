@@ -764,8 +764,13 @@ function makeLinkFeatures(_data) {
       'EDIT_TY': d.edit_ty || '',
       'FIRST_DO': d.first_do || '',
       'FIRST_GU': d.first_gu || '',
+      'LEFT_TURN_UP_DOWN': d.left_turn_up_down || '',
       'LANE_CHANGE': d.lane_change || '',
       'EX_POCKET_NUM': d.ex_pocket_num || '',
+      'USER_1': d.user_1 || '',
+      'USER_2': d.user_2 || '',
+      'USER_3': d.user_3 || '',
+      'USER_4': d.user_4 || '',
       'WKT': d.wkt
     })
     source.addFeature(_feature);

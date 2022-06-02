@@ -44,6 +44,8 @@ public class LinkEntity {
     private String USER_3;
     private String USER_4;
 
+    private String LEFT_TURN_UP_DOWN;
+
     public void setAll(LinkEntity _linkEntity) {
 
         if (_linkEntity.UP_FROM_NODE != null) {
@@ -116,6 +118,10 @@ public class LinkEntity {
 
         if (_linkEntity.USER_4 != null) {
             this.USER_4 = _linkEntity.USER_4;
+        }
+
+        if (_linkEntity.LEFT_TURN_UP_DOWN != null) {
+            this.LEFT_TURN_UP_DOWN = _linkEntity.LEFT_TURN_UP_DOWN;
         }
 
     }
