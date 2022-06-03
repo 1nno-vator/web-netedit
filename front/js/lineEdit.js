@@ -9,7 +9,7 @@ import 'ol-layerswitcher/dist/ol-layerswitcher.css';
 import 'tui-grid/dist/tui-grid.css'
 import { Feature, Map } from 'ol';
 import Collection from 'ol/Collection'
-import {DragBox, Modify, Snap, Select, Draw} from 'ol/interaction';
+import {DragBox, Modify, Snap, Select, Draw, defaults as defaultInteractions} from 'ol/interaction';
 import { Vector as VectorSource } from 'ol/source';
 import { Vector as VectorLayer} from 'ol/layer';
 import { Icon, Text, Fill, Circle as CircleStyle, Stroke, Style, RegularShape } from 'ol/style';
@@ -17,7 +17,7 @@ import Point from 'ol/geom/Point';
 import Circle from 'ol/geom/Circle';
 import { buffer } from 'ol/extent';
 import MultiPoint from 'ol/geom/MultiPoint';
-import { click, platformModifierKeyOnly } from 'ol/events/condition';
+import {never, altKeyOnly, shiftKeyOnly, platformModifierKeyOnly, singleClick, click} from 'ol/events/condition';
 
 // import BlueArrowImg from '../data/resize_blue_arrow.png';
 // import NormalArrowImg from '../data/resize_normal_arrow.png';
@@ -398,7 +398,10 @@ function initMap() {
             tempLayer
         ],
         view: common._mainMapView,
-        loadTilesWhileAnimating: true
+        loadTilesWhileAnimating: true,
+        interactions: defaultInteractions({
+            shiftDragZoom :false
+        }),
     });
 
     let layerSwitcher = new LayerSwitcher({
@@ -440,8 +443,17 @@ function initMap() {
         }
     })
 
+    map.on('click', function(evt) {
+        if (draw) {
+            console.log(altKeyOnly(evt));
+            console.log(shiftKeyOnly(evt));
+            console.log(platformModifierKeyOnly(evt));
+        }
+    })
+
     map.getViewport().addEventListener('contextmenu', function (evt) {
         evt.preventDefault();
+
         const pixel = map.getEventPixel(evt)
         const coords = map.getEventCoordinate(evt);
         let target = null;
@@ -630,7 +642,20 @@ function addUndoInteraction() {
 function addDrawBoxInteraction() {
     // a DragBox interaction used to select features by drawing boxes
     const dragBox = new DragBox({
-      condition: platformModifierKeyOnly,
+      condition: function(evt) {
+          let isAltPressed = altKeyOnly(evt);
+          console.log("isAltPressed", isAltPressed);
+          let isShiftPressed = shiftKeyOnly(evt);
+          console.log("isShiftPressed", isShiftPressed);
+          let isPlatformKeyPressed = platformModifierKeyOnly(evt);
+          console.log("isPlatformKeyPressed", isPlatformKeyPressed);
+
+          if (isPlatformKeyPressed && !isAltPressed && !isShiftPressed) {
+              return true;
+          } else {
+              return false;
+          }
+      }
     });
 
     let selectedFeatures = select.getFeatures();
@@ -652,6 +677,7 @@ function addDrawBoxInteraction() {
 function addDrawInteraction() {
     draw = new Draw({
         source: source,
+        freehandCondition: never, // <-- add this line
         type: "LineString"
     });
 
@@ -705,7 +731,10 @@ function addDrawInteraction() {
 
             uniqueNodes = Array.from(new Set(uniqueNodes));
 
+            if (!NODE_DATA) return;
+
             const nodeMap = uniqueNodes.map(v => {
+                console.log(v);
                 return NODE_DATA.find(v2 => v2.node_id === v);
             }).filter(v => v);
 
