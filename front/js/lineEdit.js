@@ -40,6 +40,8 @@ let NODE_DATA = null;
 let CIRCLE_RADIUS = 0.0000005;
 
 let map = null;
+let roadView;
+let roadViewClient;
 
 let GRID_SET_LINK_ID = null;
 
@@ -242,6 +244,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // addSnapInteraction();
 
     domEventRegister();
+
+    roadViewInit();
+
 })
 
 function domEventRegister() {
@@ -328,6 +333,8 @@ function domEventRegister() {
             addSplitInteraction();
         }
     })
+
+    document.getElementById('ROADVIEW-BTN').addEventListener('click', roadViewToggle())
 
     Hotkeys('ctrl+s', function(event, handler) {
         // Prevent the default refresh event under WINDOWS system
@@ -444,11 +451,30 @@ function initMap() {
     })
 
     map.on('click', function(evt) {
+        evt.preventDefault();
+
         if (draw) {
-            console.log(altKeyOnly(evt));
-            console.log(shiftKeyOnly(evt));
-            console.log(platformModifierKeyOnly(evt));
+            let isDrawActive = draw.getActive();
+
+            let isAltPressed = altKeyOnly(evt);
+            let isShiftPressed = shiftKeyOnly(evt);
+            let isPlatformKeyPressed = platformModifierKeyOnly(evt);
+
+            if (isDrawActive && (!isPlatformKeyPressed && !isAltPressed && isShiftPressed)) {
+              draw.finishDrawing();
+            }
         }
+
+        const isRvOn = document.getElementById('ROADVIEW-BTN').classList.contains('btn-warning');
+        let coords = (evt.coordinate).reverse();
+
+        if (isRvOn) {
+            let position = new kakao.maps.LatLng(coords[0], coords[1]);// 특정 위치의 좌표와 가까운 로드뷰의 panoId를 추출하여 로드뷰를 띄운다.
+            roadViewClient.getNearestPanoId(position, 50, function(panoId) {
+                roadView.setPanoId(panoId, position); //panoId와 중심좌표를 통해 로드뷰 실행
+            });
+        }
+
     })
 
     map.getViewport().addEventListener('contextmenu', function (evt) {
@@ -516,6 +542,21 @@ function initMap() {
 
 
     })
+
+
+}
+
+function roadViewInit() {
+    const roadViewContainer = document.getElementById('innerMap'); //로드뷰를 표시할 div
+
+    roadView = new kakao.maps.Roadview(roadViewContainer); //로드뷰 객체
+    roadViewClient = new kakao.maps.RoadviewClient(); //좌표로부터 로드뷰 파노ID를 가져올 로드뷰 helper객체
+
+    let position = new kakao.maps.LatLng(33.450701, 126.570667);// 특정 위치의 좌표와 가까운 로드뷰의 panoId를 추출하여 로드뷰를 띄운다.
+    roadViewClient.getNearestPanoId(position, 50, function(panoId) {
+        roadView.setPanoId(panoId, position); //panoId와 중심좌표를 통해 로드뷰 실행
+    });
+
 }
 
 function initGrid() {
@@ -644,11 +685,8 @@ function addDrawBoxInteraction() {
     const dragBox = new DragBox({
       condition: function(evt) {
           let isAltPressed = altKeyOnly(evt);
-          console.log("isAltPressed", isAltPressed);
           let isShiftPressed = shiftKeyOnly(evt);
-          console.log("isShiftPressed", isShiftPressed);
           let isPlatformKeyPressed = platformModifierKeyOnly(evt);
-          console.log("isPlatformKeyPressed", isPlatformKeyPressed);
 
           if (isPlatformKeyPressed && !isAltPressed && !isShiftPressed) {
               return true;
@@ -734,7 +772,6 @@ function addDrawInteraction() {
             if (!NODE_DATA) return;
 
             const nodeMap = uniqueNodes.map(v => {
-                console.log(v);
                 return NODE_DATA.find(v2 => v2.node_id === v);
             }).filter(v => v);
 
@@ -1501,6 +1538,7 @@ function buttonStyleToggle(_dom) {
 
     const allBtn = document.getElementsByClassName('control-btn');
     for (let i=0; i<allBtn.length; i++) {
+        if (allBtn[i].id === 'ROADVIEW-BTN') continue;
         allBtn[i].classList.replace('btn-primary', 'btn-secondary');
     }
 
@@ -1508,5 +1546,24 @@ function buttonStyleToggle(_dom) {
         _dom.classList.replace('btn-primary', 'btn-secondary');
     } else {
         _dom.classList.replace('btn-secondary', 'btn-primary');
+    }
+}
+
+function roadViewToggle() {
+    let isShow = false;
+    return function() {
+        let rvBtn = document.getElementById('ROADVIEW-BTN');
+        const isOn = rvBtn.classList.contains('btn-warning');
+
+        if (isOn) {
+            rvBtn.classList.replace('btn-warning', 'btn-secondary');
+        } else {
+            rvBtn.classList.replace('btn-secondary', 'btn-warning');
+        }
+
+        let innerMap = document.getElementById('innerMap-zone');
+        isShow = !isShow;
+
+        innerMap.style.display = isShow ? 'block' : 'none';
     }
 }
