@@ -1,17 +1,16 @@
 package com.web.netedit.api;
 
+import com.web.netedit.entity.FacilityEntity;
 import com.web.netedit.entity.LinkEntity;
 import com.web.netedit.entity.NodeEntity;
+import com.web.netedit.repository.FacilityRepository;
 import com.web.netedit.repository.LinkRepository;
 import com.web.netedit.util.NetworkUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping(value = "/api")
@@ -19,12 +18,12 @@ public class NetworkController {
 
     private final NetworkService networkService;
 
-    private final LinkRepository linkRepository;
+    private final FacilityRepository facilityRepository;
 
     @Autowired
-    public NetworkController(NetworkService networkService, LinkRepository linkRepository) {
+    public NetworkController(NetworkService networkService, FacilityRepository facilityRepository) {
         this.networkService = networkService;
-        this.linkRepository = linkRepository;
+        this.facilityRepository = facilityRepository;
     }
 
     @RequestMapping(value = "/connectionTest")
@@ -96,10 +95,34 @@ public class NetworkController {
         return resultMap;
     }
 
-    @RequestMapping(value = "/saveData/{dataType}", method = RequestMethod.POST)
-    public List<Map<String, Object>> saveData(@RequestBody Map paramMap, @PathVariable(value = "dataType") String dataType) {
-        List<Map<String, Object>> result = new ArrayList<>();
-        return result;
+    @RequestMapping(value = "/saveData/fac", method = RequestMethod.POST)
+    public List<Map<String, Object>> saveFacData(@RequestBody List<Map<String, Object>> paramMapList) {
+
+        for (Map<String, Object> map : paramMapList) {
+            FacilityEntity newFacilityEntity = new FacilityEntity();
+
+            String _facTy = (String) map.get("FAC_TY");
+            String _wkt = (String) map.get("WKT");
+
+            newFacilityEntity.setFAC_TY(_facTy);
+            newFacilityEntity.setWKT(_wkt);
+            newFacilityEntity.setUSE_YN(("Y"));
+
+            Optional<FacilityEntity> originFacilityEntity = facilityRepository.findById((String) map.get("FAC_ID"));
+
+            if (originFacilityEntity.isPresent()) {
+                originFacilityEntity.get().setAll(newFacilityEntity);
+                facilityRepository.save(originFacilityEntity.get());
+            } else {
+                newFacilityEntity.setFAC_ID((String) map.get("FAC_ID"));
+                facilityRepository.save(newFacilityEntity);
+            }
+
+        }
+
+        networkService.updateGeometry();
+
+        return paramMapList;
     }
 
     @RequestMapping(value = "/getNodeGroup", method = RequestMethod.POST)
@@ -128,6 +151,7 @@ public class NetworkController {
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("LINK_DATA", networkService.getLinkByZone(wkt, sggCode));
         resultMap.put("NODE_DATA", networkService.getNodeByLink(wkt, sggCode));
+        resultMap.put("FACILITY_DATA", networkService.getFacilityByZone(wkt, sggCode));
         return resultMap;
     }
 

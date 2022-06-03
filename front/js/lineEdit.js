@@ -36,21 +36,61 @@ import LayerSwitcher from "ol-layerswitcher";
 // global value
 let LINK_DATA = null;
 let NODE_DATA = null;
+let FACILITY_DATA = null;
 
 let CIRCLE_RADIUS = 0.0000005;
 
 let map = null;
+let roadView;
+let roadViewClient;
 
 let GRID_SET_LINK_ID = null;
+
+const rvSource = new VectorSource({
+  features: new Collection(),
+  // wrapX: false
+});
+const rvLayer = new VectorLayer({
+  source: rvSource,
+  style: new Style({
+        image: new CircleStyle({
+              radius: 6,
+              fill: new Fill({color: 'rgba(255, 192, 8, 0.6)'})
+          }),
+        zIndex: 999,
+      })
+});
 
 const tempNodeSource = new VectorSource();
 const tempLayer = new VectorLayer({
   source: tempNodeSource
 });
 
-const source = new VectorSource({
+const facilitySource = new VectorSource({
   features: new Collection(),
   wrapX: false
+});
+const facilityLayer = new VectorLayer({
+  source: facilitySource
+});
+const facStyleFunc = function (feature) {
+
+    const selectedFeaturesId = getSelectedFeaturesId();
+
+    return new Style({
+                image: new CircleStyle({
+                      radius: 8,
+                      fill: new Fill({
+                          color: selectedFeaturesId.includes(feature.getId()) ? 'rgb(255,0,0)' : 'rgb(217,0,255)'
+                      })
+                  }),
+                zIndex: 999,
+              })
+}
+
+const source = new VectorSource({
+  features: new Collection(),
+  // wrapX: false
 });
 const layer = new VectorLayer({
   source: source
@@ -74,16 +114,8 @@ const smLayer = new VectorLayer({
 let displayZoneFeature = null;
 
 let saveDataArchive = [];
+let facSaveDataArchive = [];
 
-const testStyle = function (feature) {
-    return new Style({
-        image: new CircleStyle({
-              radius: 13,
-              fill: new Fill({color: 'rgba(255, 0, 0, 0.6)'})
-          }),
-        zIndex: 999,
-      })
-}
 
 const styleFunction = function (feature) {
   const props = feature.getProperties();
@@ -202,6 +234,7 @@ let targetFeature = null;
 
 // interactionValue
 let select, snap, modify, undoInteraction, draw, split;
+let facSelect, facDraw, facSnap, facModify;
 //
 
 // grid value
@@ -209,6 +242,7 @@ let select, snap, modify, undoInteraction, draw, split;
 let LINK_GRID_INSTANCE;
 let FROM_NODE_GRID_INSTANCE;
 let TO_NODE_GRID_INSTANCE;
+let FAC_GRID_INSTANCE;
 
 const DEFAULT_COLUMN = [
   {
@@ -235,6 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
     getSmInter();
 
     addSelectInteraction();
+    addFacSelectInteraction();
     addDrawBoxInteraction();
     addUndoInteraction();
     // addModifyInteraction();
@@ -242,9 +277,78 @@ document.addEventListener('DOMContentLoaded', function() {
     // addSnapInteraction();
 
     domEventRegister();
+
+    roadViewInit();
+
 })
 
 function domEventRegister() {
+    document.getElementById('FAC-MNG-BTN').addEventListener('click', () => {
+        const isContinue = confirm('저장하지않은 내용은 사라집니다.\n진행합니까?');
+        if (!isContinue) {
+            return false;
+        }
+
+        buttonStyleToggle(document.getElementById('FAC-MNG-BTN'));
+
+        const isOn = document.getElementById('FAC-MNG-BTN').classList.contains('btn-primary');
+
+        allInteractionOff()
+        clearing();
+
+        if (isOn) {
+            addFacModifyInteraction();
+            addFacDrawInteraction();
+            addFacSnapInteraction();
+            document.getElementById('fac-grid-zone').style.display = 'block';
+            document.getElementById('main-grid-zone').style.display = 'none';
+
+            if (!FAC_GRID_INSTANCE) {
+                FAC_GRID_INSTANCE = new Grid({
+                    el: document.getElementById('fac-grid'), // Container element
+                    rowHeight: 30,
+                    minRowHeight: 0,
+                    scrollX: false,
+                    minBodyHeight: 450,
+                    bodyHeight: 450,
+                    columns: DEFAULT_COLUMN
+                });
+
+                const EDITABLE_COLUMN = [
+                {
+                  header: '컬럼명',
+                  name: 'name',
+                  align: 'center',
+                  valign: 'middle'
+                },
+                {
+                  header: 'Value',
+                  name: 'value',
+                  align: 'center',
+                  valign: 'middle',
+                  editor: 'text'
+                }
+              ];
+
+              FAC_GRID_INSTANCE.on('afterChange', (ev) => {
+                const changes = ev.changes[0];
+                const rowInfo = FAC_GRID_INSTANCE.getRowAt(changes.rowKey);
+                const changeColumnName = rowInfo.name;
+                const changeValue = rowInfo.value;
+
+                const FAC_GRID_DATA = FAC_GRID_INSTANCE.getData();
+                const FAC_ID = FAC_GRID_DATA.find(v => v.name === "FAC_ID").value;
+
+                const feature = facilitySource.getFeatureById(FAC_ID);
+                feature.set(changeColumnName, changeValue);
+              })
+
+              FAC_GRID_INSTANCE.setColumns(EDITABLE_COLUMN);
+            }
+        }
+    })
+
+
     document.getElementById('UNDO_BTN').addEventListener('click', (e) => {
         undoInteraction.undo();
         wktUpdate();
@@ -256,7 +360,13 @@ function domEventRegister() {
     })
 
     document.getElementById('SAVE_BTN').addEventListener('click', (e) => {
-        applyData();
+
+        const flag = 'fac';
+        if (flag === 'fac') {
+            applyData(flag);
+        } else {
+            applyData();
+        }
     })
 
     document.getElementById('search-feature-btn').addEventListener('click', (e) => {
@@ -282,13 +392,14 @@ function domEventRegister() {
         const isOn = document.getElementById('CREATE-BTN').classList.contains('btn-primary');
 
         allInteractionOff()
-        select.getFeatures().clear();
         clearing();
 
         if (isOn) {
             addModifyInteraction();
             addDrawInteraction();
             addSnapInteraction();
+            document.getElementById('main-grid-zone').style.display = 'block';
+            document.getElementById('fac-grid-zone').style.display = 'none';
         }
     })
 
@@ -302,12 +413,13 @@ function domEventRegister() {
         const isOn = document.getElementById('MODIFY-BTN').classList.contains('btn-primary');
 
         allInteractionOff();
-        select.getFeatures().clear();
         clearing();
 
         if (isOn) {
             addModifyInteraction();
             addSnapInteraction();
+            document.getElementById('main-grid-zone').style.display = 'block';
+            document.getElementById('fac-grid-zone').style.display = 'none';
         }
     })
 
@@ -321,13 +433,16 @@ function domEventRegister() {
         const isOn = document.getElementById('SPLIT-BTN').classList.contains('btn-primary');
 
         allInteractionOff();
-        select.getFeatures().clear();
         clearing();
 
         if (isOn) {
             addSplitInteraction();
+            document.getElementById('main-grid-zone').style.display = 'block';
+            document.getElementById('fac-grid-zone').style.display = 'none';
         }
     })
+
+    document.getElementById('ROADVIEW-BTN').addEventListener('click', roadViewToggle())
 
     Hotkeys('ctrl+s', function(event, handler) {
         // Prevent the default refresh event under WINDOWS system
@@ -356,9 +471,18 @@ function domEventRegister() {
 
         const isConfirm = confirm('선택된 형상들을 삭제하시겠습니까?')
         if (isConfirm) {
-            select.getFeatures().forEach(function(_f) {
-                deleteData(_f.get("LINK_ID"),"LINK")
-            })
+            const isFacMode = document.getElementById('FAC-MNG-BTN').classList.contains('btn-primary');
+
+            if (!isFacMode) {
+                select.getFeatures().forEach(function(_f) {
+                    deleteData(_f.get("LINK_ID"),"LINK")
+                })
+            } else {
+                facSelect.getFeatures().forEach(function(_f) {
+                    deleteData(_f.get("FAC_ID"), "FACILITY");
+                })
+            }
+
             alert('저장되었습니다.');
         }
 
@@ -394,8 +518,10 @@ function initMap() {
           common._baseMapLayer,
           common._baseMapInfoLayer,
           smLayer,
+          facilityLayer,
           layer,
-            tempLayer
+          tempLayer,
+          rvLayer
         ],
         view: common._mainMapView,
         loadTilesWhileAnimating: true,
@@ -425,7 +551,7 @@ function initMap() {
         // zoom 할 수록 커짐
         let newZoom = getZoomLevel();
 
-        if (newZoom > 16) {
+        if (newZoom > 14) {
             let nowDisplayExtent = getExtent();
 
             let displayZonePolygon = fromExtent(nowDisplayExtent);
@@ -440,15 +566,43 @@ function initMap() {
             if (getCheckValue().length === 0) {
                 getFeaturesByZone(wkt);
             }
+
         }
     })
 
     map.on('click', function(evt) {
+        evt.preventDefault();
+
         if (draw) {
-            console.log(altKeyOnly(evt));
-            console.log(shiftKeyOnly(evt));
-            console.log(platformModifierKeyOnly(evt));
+            let isDrawActive = draw.getActive();
+
+            let isAltPressed = altKeyOnly(evt);
+            let isShiftPressed = shiftKeyOnly(evt);
+            let isPlatformKeyPressed = platformModifierKeyOnly(evt);
+
+            if (isDrawActive && (!isPlatformKeyPressed && !isAltPressed && isShiftPressed)) {
+              draw.finishDrawing();
+            }
         }
+
+        const isRvOn = document.getElementById('ROADVIEW-BTN').classList.contains('btn-warning');
+        let coords = (evt.coordinate).reverse();
+
+        if (isRvOn) {
+            let position = new kakao.maps.LatLng(coords[0], coords[1]);// 특정 위치의 좌표와 가까운 로드뷰의 panoId를 추출하여 로드뷰를 띄운다.
+            roadViewClient.getNearestPanoId(position, 50, function(panoId) {
+                roadView.setPanoId(panoId, position); //panoId와 중심좌표를 통해 로드뷰 실행
+                let [rvPY, rvPX] = roadView.getPosition().toString().replace("(","").replace(")","").replace(" ","").split(",");
+                let [rvPositionY, rvPositionX] = [Number(rvPY), Number(rvPX)];
+
+                rvSource.clear();
+                let rvFeature = new Feature({
+                    geometry: new Point([rvPositionX, rvPositionY])
+                })
+                rvSource.addFeature(rvFeature);
+            });
+        }
+
     })
 
     map.getViewport().addEventListener('contextmenu', function (evt) {
@@ -463,59 +617,107 @@ function initMap() {
 
         const COORDS_CIRCLE = new Circle(coords, CIRCLE_RADIUS)
 
-        const intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
+        const isFacMode = document.getElementById('FAC-MNG-BTN').classList.contains('btn-primary');
 
-        let dist = 999999999999999;
+        let intersect;
+        if (!isFacMode) {
+            intersect = source.getFeaturesInExtent(COORDS_CIRCLE.getExtent());
 
-        intersect.forEach(function(v) {
-            if (v.get("featureType") === "LINK") {
-                v.getGeometry().forEachSegment(function(start, end) {
-                    let compareDist = olSphere.getDistance(coords, start)
-                    if (compareDist < dist) {
-                        target = v;
-                        dist = compareDist;
-                    }
-                    compareDist = olSphere.getDistance(coords, end);
-                    if (compareDist < dist) {
-                        target = v;
-                        dist = compareDist;
-                    }
+            let dist = 999999999999999;
 
-                    const segLine = new LineString([start, end]);
-                    const segLineCenterCoord = segLine.getCoordinateAt(0.5);
-                    compareDist = olSphere.getDistance(coords, segLineCenterCoord)
-                    if (compareDist < dist) {
-                        target = v;
-                        dist = compareDist;
-                    }
-                })
+            intersect.forEach(function(v) {
+                if (v.get("featureType") === "LINK") {
+                    v.getGeometry().forEachSegment(function(start, end) {
+                        let compareDist = olSphere.getDistance(coords, start)
+                        if (compareDist < dist) {
+                            target = v;
+                            dist = compareDist;
+                        }
+                        compareDist = olSphere.getDistance(coords, end);
+                        if (compareDist < dist) {
+                            target = v;
+                            dist = compareDist;
+                        }
+
+                        const segLine = new LineString([start, end]);
+                        const segLineCenterCoord = segLine.getCoordinateAt(0.5);
+                        compareDist = olSphere.getDistance(coords, segLineCenterCoord)
+                        if (compareDist < dist) {
+                            target = v;
+                            dist = compareDist;
+                        }
+                    })
+                }
+            })
+
+            if (target) {
+                if (NODE_DATA) {
+                    setNodeData(target);
+                }
+                pushSaveData(target);
+                setGridData(target);
+
+                if (idMaps.includes(target.getId())) {
+                    selectedFeatures.forEach((sf) => {
+                        if (sf && target) {
+                            // if (sf.getId() === target.getId()) {
+                            //     selectedFeatures.remove(sf);
+                            // }
+                        }
+                    })
+                } else {
+                    select.getFeatures().push(target);
+                }
+
+                source.dispatchEvent('change');
             }
-        })
+        } else {
 
-        if (target) {
-            if (NODE_DATA) {
-                setNodeData(target);
+            facSelect.getFeatures().clear();
+            let temp = [];
+
+            map.forEachFeatureAtPixel(pixel, function(_z) {
+                if (_z.get("featureType") === "FACILITY") {
+                    temp.push(_z);
+                }
+            })
+
+            let dist = 999999999999999;
+
+            temp.forEach(function(v) {
+                let compareDist = olSphere.getDistance(coords, v.getGeometry().getCoordinates())
+                if (compareDist < dist) {
+                    target = v;
+                    dist = compareDist;
+                }
+            })
+
+            if (target) {
+
+                facSelect.getFeatures().push(target);
+                setGridData(target, 'fac')
+                pushSaveData(target, 'fac');
             }
-            pushSaveData(target);
-            setGridData(target);
+            facilitySource.dispatchEvent('change');
 
-            if (idMaps.includes(target.getId())) {
-                selectedFeatures.forEach((sf) => {
-                    if (sf && target) {
-                        // if (sf.getId() === target.getId()) {
-                        //     selectedFeatures.remove(sf);
-                        // }
-                    }
-                })
-            } else {
-                select.getFeatures().push(target);
-            }
-
-            source.dispatchEvent('change');
         }
 
-
     })
+
+
+}
+
+function roadViewInit() {
+    const roadViewContainer = document.getElementById('innerMap'); //로드뷰를 표시할 div
+
+    roadView = new kakao.maps.Roadview(roadViewContainer); //로드뷰 객체
+    roadViewClient = new kakao.maps.RoadviewClient(); //좌표로부터 로드뷰 파노ID를 가져올 로드뷰 helper객체
+
+    let position = new kakao.maps.LatLng(33.450701, 126.570667);// 특정 위치의 좌표와 가까운 로드뷰의 panoId를 추출하여 로드뷰를 띄운다.
+    roadViewClient.getNearestPanoId(position, 50, function(panoId) {
+        roadView.setPanoId(panoId, position); //panoId와 중심좌표를 통해 로드뷰 실행
+    });
+
 }
 
 function initGrid() {
@@ -577,7 +779,8 @@ function addSelectInteraction() {
 
         },
         style: styleFunction,
-        multi: false
+        multi: false,
+        wrapX: false
     })
 
     let selectedFeatures = select.getFeatures();
@@ -611,12 +814,41 @@ function addSelectInteraction() {
     map.addInteraction(select);
 }
 
+function addFacSelectInteraction() {
+    facSelect = new Select({
+        source: facilitySource,
+        filter: function(f, l) {
+
+          if (f.get('featureType') === "LINK") {
+            return false;
+          } else {
+            return true;
+          }
+
+        }
+    })
+
+    let facSelectedFeatures = facSelect.getFeatures();
+
+    facSelectedFeatures.on('add', function(e) {
+
+        facSelectedFeatures.forEach(function (value) {
+            const target = value;
+            if (target.get("FAC_ID")) {
+                pushSaveData(value, 'fac')
+            }
+
+        })
+
+    })
+}
+
 function addModifyInteraction() {
     modify = new Modify({
         features: select.getFeatures(),
         // source: select.getSource(),
         pixelTolerance: 15,
-        wrapX: false
+        // wrapX: false
     });
 
     modify.on('modifyend', function(e) {
@@ -626,11 +858,33 @@ function addModifyInteraction() {
     map.addInteraction(modify);
 }
 
+function addFacModifyInteraction() {
+    facModify = new Modify({
+        source: facilitySource,
+        pixelTolerance: 15,
+        // wrapX: false
+    });
+
+    facModify.on('modifyend', function(e) {
+        facSelect.getFeatures().extend(e.features.getArray());
+        wktUpdate('fac');
+    })
+
+    map.addInteraction(facModify);
+}
+
 function addSnapInteraction() {
     snap = new Snap({
         source: source
     });
     map.addInteraction(snap);
+}
+
+function addFacSnapInteraction() {
+    facSnap = new Snap({
+        source: facilitySource
+    });
+    map.addInteraction(facSnap);
 }
 
 function addUndoInteraction() {
@@ -644,11 +898,8 @@ function addDrawBoxInteraction() {
     const dragBox = new DragBox({
       condition: function(evt) {
           let isAltPressed = altKeyOnly(evt);
-          console.log("isAltPressed", isAltPressed);
           let isShiftPressed = shiftKeyOnly(evt);
-          console.log("isShiftPressed", isShiftPressed);
           let isPlatformKeyPressed = platformModifierKeyOnly(evt);
-          console.log("isPlatformKeyPressed", isPlatformKeyPressed);
 
           if (isPlatformKeyPressed && !isAltPressed && !isShiftPressed) {
               return true;
@@ -659,16 +910,20 @@ function addDrawBoxInteraction() {
     });
 
     let selectedFeatures = select.getFeatures();
+    let facSelectedFeatures = facSelect.getFeatures();
 
     // clear selection when drawing a new box and when clicking on the map
     dragBox.on('boxstart', function () {
       selectedFeatures.clear();
+      facSelectedFeatures.clear();
     });
 
     dragBox.on('boxend', function () {
       const extent = dragBox.getGeometry().getExtent();
       const boxFeatures = source.getFeaturesInExtent(extent).filter((feature) => feature.getGeometry().intersectsExtent(extent));
       selectedFeatures.extend(boxFeatures);
+      const facBoxFeatures = facilitySource.getFeaturesInExtent(extent).filter((feature) => feature.getGeometry().intersectsExtent(extent));
+      facSelectedFeatures.extend(facBoxFeatures);
     });
 
     map.addInteraction(dragBox);
@@ -678,17 +933,23 @@ function addDrawInteraction() {
     draw = new Draw({
         source: source,
         freehandCondition: never, // <-- add this line
+        condition: function(e) {
+            // when the point's button is 1(leftclick), allows drawing
+              if (e.originalEvent.buttons === 1) {
+                return true;
+              } else {
+                return false;
+              }
+        },
         type: "LineString"
     });
 
     draw.on('drawstart', function(e) {
-
         e.feature.setStyle(styleFunction);
         tempNodeSource.clear();
     })
 
     draw.on('drawend', function(e) {
-
         const drawFeature = e.feature;
 
         const wktFormat = new WKT();
@@ -734,7 +995,6 @@ function addDrawInteraction() {
             if (!NODE_DATA) return;
 
             const nodeMap = uniqueNodes.map(v => {
-                console.log(v);
                 return NODE_DATA.find(v2 => v2.node_id === v);
             }).filter(v => v);
 
@@ -927,6 +1187,49 @@ function addDrawInteraction() {
     map.addInteraction(draw);
 }
 
+function addFacDrawInteraction() {
+    facDraw = new Draw({
+        source: facilitySource,
+        condition: function(e) {
+            // when the point's button is 1(leftclick), allows drawing
+            console.log(e);
+              if (e.originalEvent.buttons === 1) {
+                return true;
+              } else {
+                return false;
+              }
+        },
+        type: "Point"
+    });
+
+    facDraw.on('drawstart', function(e) {
+        e.feature.setStyle(facStyleFunc);
+        facSelect.getFeatures().clear();
+    })
+
+    facDraw.on('drawend', function(e) {
+
+        const drawFacFeature = e.feature;
+
+        const wktFormat = new WKT();
+
+        drawFacFeature.setProperties({
+            'featureType': 'FACILITY',
+            'FAC_ID': "CF" + makeTimeKey(),
+            'FAC_TY': '',
+            'WKT': wktFormat.writeGeometry(drawFacFeature.getGeometry()).replace("(", " (").replace(",",", "),
+            'USE_YN': 'Y'
+        })
+        drawFacFeature.setId(drawFacFeature.get("FAC_ID"));
+
+        facSelect.getFeatures().push(drawFacFeature);
+        setGridData(drawFacFeature, 'fac');
+
+    })
+
+    map.addInteraction(facDraw);
+}
+
 function addSplitInteraction() {
     split = new Split({
         sources: source
@@ -1090,8 +1393,10 @@ function getFeaturesByZone(_displayZoneWKT) {
 
     LINK_DATA = data.LINK_DATA;
     NODE_DATA = data.NODE_DATA;
+    FACILITY_DATA = data.FACILITY_DATA;
 
     makeLinkFeatures(LINK_DATA);
+    makeFacFeatures(FACILITY_DATA);
     // makeNodeFeatures(NODE_DATA);
 
   })
@@ -1148,6 +1453,38 @@ function makeLinkFeatures(_data) {
     source.addFeature(_feature);
     _feature.setStyle(styleFunction)
   }
+
+}
+
+function makeFacFeatures(_data) {
+
+    const dataLength = _data.length;
+    const format = new WKT();
+
+    for (let i=0; i<dataLength; i++) {
+        const d = _data[i];
+        if (d.use_yn !== SHOW_USE_YN) {
+          let removeTarget = facilitySource.getFeatureById(d.fac_id);
+          if (removeTarget) {
+            facilitySource.removeFeature(removeTarget)
+          }
+          continue;
+        };
+        let _feature = format.readFeature(d.wkt,  {
+          dataProjection: 'EPSG:4326',
+          featureProjection: 'EPSG:4326'
+        });
+        _feature.setId(d.fac_id);
+        _feature.setProperties({
+          'featureType': 'FACILITY',
+          'FAC_ID': d.fac_id,
+          'FAC_TY': d.fac_ty,
+          'USE_YN': d.use_yn,
+          'WKT': d.wkt
+        })
+        facilitySource.addFeature(_feature);
+        _feature.setStyle(facStyleFunc)
+    }
 
 }
 
@@ -1291,32 +1628,65 @@ function setNodeData(target) {
     target.set("LINK_DATA_REPO", LINK_PROPS);
 }
 
-function pushSaveData(target) {
+function pushSaveData(target, flag) {
     // const {FROM_NODE_DATA_REPO, TO_NODE_DATA_REPO, geometry, featureType, ...LINK_DATA_REPO} = JSON.parse(JSON.stringify(target.getProperties()));
-    setTimeout(() => {
 
-        saveDataArchive.push(target.getId());
-        saveDataArchive = Array.from(new Set(saveDataArchive));
-        saveDataArchive = saveDataArchive.filter(v => {
-            return source.getFeatureById(v) !== null;
-        })
+    if (!flag) {
 
-    }, 10)
+        setTimeout(() => {
+
+            saveDataArchive.push(target.getId());
+            saveDataArchive = Array.from(new Set(saveDataArchive));
+            saveDataArchive = saveDataArchive.filter(v => {
+                return source.getFeatureById(v) !== null;
+            })
+
+
+        }, 10)
+
+    } else {
+
+        setTimeout(() => {
+
+            facSaveDataArchive.push(target.getId());
+            facSaveDataArchive = Array.from(new Set(facSaveDataArchive));
+            facSaveDataArchive = facSaveDataArchive.filter(v => {
+                return facilitySource.getFeatureById(v) !== null;
+            })
+
+
+        }, 10)
+
+    }
 }
 
-function setGridData(target) {
-    const {FROM_NODE_DATA_REPO, TO_NODE_DATA_REPO, ...LINK_DATA_REPO} = JSON.parse(JSON.stringify(target.get("LINK_DATA_REPO")));
+function setGridData(target, flag) {
 
-    const LINK_GRID_DATA = getGridData(LINK_DATA_REPO, 'LINK')
-    LINK_GRID_INSTANCE.resetData(LINK_GRID_DATA);
+    if (flag) {
 
-    const FROM_NODE_GRID_DATA = getGridData(FROM_NODE_DATA_REPO, 'FROM_NODE');
-    FROM_NODE_GRID_INSTANCE.resetData(FROM_NODE_GRID_DATA);
-    const TO_NODE_GRID_DATA = getGridData(TO_NODE_DATA_REPO, 'TO_NODE');
-    TO_NODE_GRID_INSTANCE.resetData(TO_NODE_GRID_DATA);
+        const targetProps = JSON.parse(JSON.stringify(target.getProperties()));
 
-    GRID_SET_LINK_ID = target.get("LINK_ID");
+        const FAC_GRID_DATA = getGridData(targetProps);
+        FAC_GRID_INSTANCE.resetData(FAC_GRID_DATA);
+
+    } else {
+        const {FROM_NODE_DATA_REPO, TO_NODE_DATA_REPO, ...LINK_DATA_REPO} = JSON.parse(JSON.stringify(target.get("LINK_DATA_REPO")));
+
+        const LINK_GRID_DATA = getGridData(LINK_DATA_REPO, 'LINK')
+        LINK_GRID_INSTANCE.resetData(LINK_GRID_DATA);
+
+        const FROM_NODE_GRID_DATA = getGridData(FROM_NODE_DATA_REPO, 'FROM_NODE');
+        FROM_NODE_GRID_INSTANCE.resetData(FROM_NODE_GRID_DATA);
+        const TO_NODE_GRID_DATA = getGridData(TO_NODE_DATA_REPO, 'TO_NODE');
+        TO_NODE_GRID_INSTANCE.resetData(TO_NODE_GRID_DATA);
+
+        GRID_SET_LINK_ID = target.get("LINK_ID");
+    }
+
+
 }
+
+
 
 function getGridData(_data, _dataType) {
   // { name: 컬럼명, value: 값 }
@@ -1337,23 +1707,40 @@ function getGridData(_data, _dataType) {
     return dataMap;
 }
 
-function applyData() {
+function applyData(flag) {
 
     wktUpdate();
 
     const urlPrefix = `${common.API_PATH}/api`;
 
-    const DATA_REPO = saveDataArchive.map(v => {
-        const findFeature = source.getFeatureById(v);
-        const findFeaturesProps = findFeature.getProperties();
-        return findFeaturesProps;
-    })
+    let DATA_REPO;
 
-    console.log(saveDataArchive);
+    if (!flag) {
+        DATA_REPO = saveDataArchive.map(v => {
+            const findFeature = source.getFeatureById(v);
+            const findFeaturesProps = findFeature.getProperties();
+            return findFeaturesProps;
+        })
+    } else {
+        DATA_REPO = facSaveDataArchive.map(v => {
+            const findFeature = facilitySource.getFeatureById(v);
+            const findFeaturesProps = findFeature.getProperties();
+            return findFeaturesProps;
+        })
+    }
+
+    let POST_URL;
+
+    if (flag) {
+        POST_URL = `${urlPrefix}/saveData/fac`
+    }  else {
+        POST_URL = `${urlPrefix}/saveData`
+    }
+
     console.log(DATA_REPO);
 
     // axios.post(`${urlPrefix}/saveData/${_dataType}`, sendData)
-    axios.post(`${urlPrefix}/saveData`, DATA_REPO)
+    axios.post(POST_URL, DATA_REPO)
     .then(({ data }) => {
 
         if (DELETE_FEATURES_ID.length > 0) {
@@ -1364,6 +1751,7 @@ function applyData() {
             clearing();
             alert('저장되었습니다.');
             saveDataArchive = [];
+            facSaveDataArchive = [];
         }
 
     })
@@ -1398,7 +1786,16 @@ function getExtent() {
 }
 
 function getSelectedFeaturesId() {
-    return select ? select.getFeatures().getArray().map(v => v.getId()) : [];
+
+    const isFacMode = document.getElementById('FAC-MNG-BTN').classList.contains('btn-primary');
+
+    if (!isFacMode) {
+        return select ? select.getFeatures().getArray().map(v => v.getId()) : [];
+    } else {
+        return facSelect ? facSelect.getFeatures().getArray().map(v => v.getId()) : [];
+    }
+
+
 }
 
 function getZoomLevel() {
@@ -1429,6 +1826,7 @@ function clearing() {
     }
 
     tempNodeSource.clear();
+    facilitySource.clear();
     source.clear();
 
     displayZoneFeature = null;
@@ -1452,6 +1850,8 @@ function clearing() {
 
     select.getFeatures().clear();
     GRID_SET_LINK_ID = null;
+
+    source.refresh();
 }
 
 function getCheckValue() {
@@ -1464,36 +1864,45 @@ function getCheckValue() {
     return checkedValueArray;
 }
 
-function wktUpdate() {
-    const selectedFeatures = select.getFeatures();
+function wktUpdate(flag) {
+    const selectedFeatures = flag ? facSelect.getFeatures() : select.getFeatures();
 
     selectedFeatures.forEach(function(_f) {
-        const wkt = new WKT();
-        const NEW_LINK_WKT = wkt.writeGeometry(_f.getGeometry()).replace("(", " (").replace(",",", ");
-        const NEW_FROM_NODE_WKT = wkt.writeGeometry(new Point(_f.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ");
-        const NEW_TO_NODE_WKT = wkt.writeGeometry(new Point(_f.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ");
+        if (!flag) {
+            const wkt = new WKT();
+            const NEW_LINK_WKT = wkt.writeGeometry(_f.getGeometry()).replace("(", " (").replace(",",", ");
+            const NEW_FROM_NODE_WKT = wkt.writeGeometry(new Point(_f.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ");
+            const NEW_TO_NODE_WKT = wkt.writeGeometry(new Point(_f.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ");
 
-        _f.set("WKT", NEW_LINK_WKT);
+            _f.set("WKT", NEW_LINK_WKT);
 
-        const LINK_DATA_REPO = JSON.parse(JSON.stringify(_f.get("LINK_DATA_REPO")));
-        const FROM_NODE_DATA_REPO = JSON.parse(JSON.stringify(LINK_DATA_REPO.FROM_NODE_DATA_REPO));
-        const TO_NODE_DATA_REPO = JSON.parse(JSON.stringify(LINK_DATA_REPO.TO_NODE_DATA_REPO));
+            const LINK_DATA_REPO = JSON.parse(JSON.stringify(_f.get("LINK_DATA_REPO")));
+            const FROM_NODE_DATA_REPO = JSON.parse(JSON.stringify(LINK_DATA_REPO.FROM_NODE_DATA_REPO));
+            const TO_NODE_DATA_REPO = JSON.parse(JSON.stringify(LINK_DATA_REPO.TO_NODE_DATA_REPO));
 
-        LINK_DATA_REPO.WKT = NEW_LINK_WKT;
-        FROM_NODE_DATA_REPO.WKT = NEW_FROM_NODE_WKT;
-        TO_NODE_DATA_REPO.WKT = NEW_TO_NODE_WKT;
+            LINK_DATA_REPO.WKT = NEW_LINK_WKT;
+            FROM_NODE_DATA_REPO.WKT = NEW_FROM_NODE_WKT;
+            TO_NODE_DATA_REPO.WKT = NEW_TO_NODE_WKT;
 
-        LINK_DATA_REPO.FROM_NODE_DATA_REPO = FROM_NODE_DATA_REPO;
-        LINK_DATA_REPO.TO_NODE_DATA_REPO = TO_NODE_DATA_REPO;
+            LINK_DATA_REPO.FROM_NODE_DATA_REPO = FROM_NODE_DATA_REPO;
+            LINK_DATA_REPO.TO_NODE_DATA_REPO = TO_NODE_DATA_REPO;
 
-        _f.set("LINK_DATA_REPO", LINK_DATA_REPO);
-
+            _f.set("LINK_DATA_REPO", LINK_DATA_REPO);
+        } else {
+            const wkt = new WKT();
+            _f.set("WKT", wkt.writeGeometry(new Point(_f.getGeometry().getCoordinates())).replace("(", " (").replace(",",", "))
+        }
     })
+
 }
 
 function allInteractionOff() {
     map.removeInteraction(draw);
     map.removeInteraction(modify);
+
+    map.removeInteraction(facDraw);
+    map.removeInteraction(facModify);
+    map.removeInteraction(facSnap);
 }
 
 function buttonStyleToggle(_dom) {
@@ -1501,6 +1910,7 @@ function buttonStyleToggle(_dom) {
 
     const allBtn = document.getElementsByClassName('control-btn');
     for (let i=0; i<allBtn.length; i++) {
+        if (allBtn[i].id === 'ROADVIEW-BTN') continue;
         allBtn[i].classList.replace('btn-primary', 'btn-secondary');
     }
 
@@ -1509,4 +1919,39 @@ function buttonStyleToggle(_dom) {
     } else {
         _dom.classList.replace('btn-secondary', 'btn-primary');
     }
+}
+
+function roadViewToggle() {
+    let isShow = false;
+    return function() {
+        let rvBtn = document.getElementById('ROADVIEW-BTN');
+        const isOn = rvBtn.classList.contains('btn-warning');
+
+        if (isOn) {
+            rvBtn.classList.replace('btn-warning', 'btn-secondary');
+        } else {
+            rvBtn.classList.replace('btn-secondary', 'btn-warning');
+        }
+
+        let innerMap = document.getElementById('innerMap-zone');
+        isShow = !isShow;
+
+        innerMap.style.display = isShow ? 'block' : 'none';
+    }
+}
+
+function generateUUID() { // Public Domain/MIT
+    var d = new Date().getTime();//Timestamp
+    var d2 = ((typeof performance !== 'undefined') && performance.now && (performance.now()*1000)) || 0;//Time in microseconds since page-load or 0 if unsupported
+    return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16;//random number between 0 and 16
+        if(d > 0){//Use timestamp until depleted
+            r = (d + r)%16 | 0;
+            d = Math.floor(d/16);
+        } else {//Use microseconds since page-load if supported
+            r = (d2 + r)%16 | 0;
+            d2 = Math.floor(d2/16);
+        }
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
 }

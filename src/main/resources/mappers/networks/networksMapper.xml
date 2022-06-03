@@ -69,6 +69,22 @@
 
     </select>
 
+    <select id="getFacilityByZone" parameterType="HashMap" resultType="HashMap">
+
+        SELECT
+        	FAC_ID
+            , FAC_TY
+            , WKT
+            , USE_YN
+        FROM NETEDIT_MS_FACILITY_2020
+        WHERE 1=1
+        AND ST_Intersects(
+            ST_GeometryFromText(#{WKT}),
+            GEOM
+        )
+
+    </select>
+
     <select id="getNodeByZone" parameterType="HashMap" resultType="HashMap">
 
         SELECT NODE_ID, NODE_TYPE, TRAFFIC_LIGHT, NODE_NAME, DISTRICT_ID, DISTRICT_ID2, WKT, USE_YN
@@ -190,6 +206,11 @@
 
     <update id="updateNodeGeometry">
         UPDATE NETEDIT_MS_NODE_2020
+        SET GEOM = ST_GEOMETRYFROMTEXT(WKT)
+    </update>
+
+    <update id="updateFacGeometry">
+        UPDATE NETEDIT_MS_FACILITY_2020
         SET GEOM = ST_GEOMETRYFROMTEXT(WKT)
     </update>
 

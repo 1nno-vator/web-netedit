@@ -34,6 +34,11 @@ public class NetworkDAO {
         return sqlSessionTemplate.selectList(NAMESPACE + queryId, map);
     }
 
+    public List<Map<String, Object>> getFacilityByZone(Map map) {
+        String queryId = "getFacilityByZone";
+        return sqlSessionTemplate.selectList(NAMESPACE + queryId, map);
+    }
+
     public List<Map<String, Object>> getNodeByZone(Map map) {
         String queryId = "getNodeByZone";
         return sqlSessionTemplate.selectList(NAMESPACE + queryId, map);
@@ -69,7 +74,9 @@ public class NetworkDAO {
         int linkUpdateRows = sqlSessionTemplate.update(NAMESPACE + queryId);
         queryId = "updateNodeGeometry";
         int nodeUpdateRows = sqlSessionTemplate.update(NAMESPACE + queryId);
-        return linkUpdateRows + nodeUpdateRows;
+        queryId = "updateFacGeometry";
+        int facUpdateRows = sqlSessionTemplate.update(NAMESPACE + queryId);
+        return linkUpdateRows + nodeUpdateRows + facUpdateRows;
     }
 
 }

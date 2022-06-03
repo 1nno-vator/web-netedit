@@ -1,7 +1,9 @@
 package com.web.netedit.api;
 
+import com.web.netedit.entity.FacilityEntity;
 import com.web.netedit.entity.LinkEntity;
 import com.web.netedit.entity.NodeEntity;
+import com.web.netedit.repository.FacilityRepository;
 import com.web.netedit.repository.LinkRepository;
 import com.web.netedit.repository.NodeRepository;
 import com.web.netedit.util.NetworkUtil;
@@ -17,12 +19,14 @@ public class NetworkService {
 
     private final LinkRepository linkRepository;
     private final NodeRepository nodeRepository;
+    private final FacilityRepository facilityRepository;
 
     @Autowired
-    public NetworkService(NetworkDAO networkDAO, LinkRepository linkRepository, NodeRepository nodeRepository) {
+    public NetworkService(NetworkDAO networkDAO, LinkRepository linkRepository, NodeRepository nodeRepository, FacilityRepository facilityRepository) {
         this.networkDAO = networkDAO;
         this.linkRepository = linkRepository;
         this.nodeRepository = nodeRepository;
+        this.facilityRepository = facilityRepository;
     }
 
     public List<Map<String, Object>> connectionTest() {
@@ -38,6 +42,13 @@ public class NetworkService {
         map.put("WKT", wkt);
         map.put("SGG_CODE", sggCode);
         return networkDAO.getLinkByZone(map);
+    }
+
+    public List<Map<String, Object>> getFacilityByZone(String wkt, List<String> sggCode) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("WKT", wkt);
+        map.put("SGG_CODE", sggCode);
+        return networkDAO.getFacilityByZone(map);
     }
 
     public List<Map<String, Object>> getNodeByLink(String wkt, List<String> sggCode) {
@@ -135,6 +146,12 @@ public class NetworkService {
                     nodeRepository.save(nodeEntity.get());
                 }
                 break;
+            case "FACILITY":
+                Optional<FacilityEntity> facilityEntity = facilityRepository.findById(id);
+                if (facilityEntity.isPresent()) {
+                    facilityEntity.get().setUSE_YN("N");
+                    facilityRepository.save(facilityEntity.get());
+                }
         }
 
         return map;
