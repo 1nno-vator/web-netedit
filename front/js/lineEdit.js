@@ -38,6 +38,8 @@ let LINK_DATA = null;
 let NODE_DATA = null;
 let FACILITY_DATA = null;
 
+let SESSION_UID = null;
+
 let CIRCLE_RADIUS = 0.0000005;
 
 let map = null;
@@ -278,11 +280,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     domEventRegister();
 
+    setSession();
+
     roadViewInit();
 
 })
 
 function domEventRegister() {
+
+    window.addEventListener('beforeunload', (event) => {
+        // 표준에 따라 기본 동작 방지
+        event.preventDefault();
+        // Chrome에서는 returnValue 설정이 필요함
+        expireSession()
+        event.returnValue = '';
+    });
+
+
     document.getElementById('FAC-MNG-BTN').addEventListener('click', () => {
         const isContinue = confirm('저장하지않은 내용은 사라집니다.\n진행합니까?');
         if (!isContinue) {
@@ -361,12 +375,14 @@ function domEventRegister() {
 
     document.getElementById('SAVE_BTN').addEventListener('click', (e) => {
 
-        const flag = 'fac';
-        if (flag === 'fac') {
-            applyData(flag);
-        } else {
+        const isFacMode = document.getElementById('FAC-MNG-BTN').classList.contains('btn-primary');
+
+        if (!isFacMode) {
             applyData();
+        } else {
+            applyData(flag);
         }
+
     })
 
     document.getElementById('search-feature-btn').addEventListener('click', (e) => {
@@ -551,7 +567,7 @@ function initMap() {
         // zoom 할 수록 커짐
         let newZoom = getZoomLevel();
 
-        if (newZoom > 14) {
+        if (newZoom > 16) {
             let nowDisplayExtent = getExtent();
 
             let displayZonePolygon = fromExtent(nowDisplayExtent);
@@ -1955,3 +1971,29 @@ function generateUUID() { // Public Domain/MIT
         return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
 }
+function setSession() {
+    console.log(`${common.API_PATH}/setSession`);
+    axios.post(`${common.API_PATH}/setSession`)
+    .then(({ data }) => {
+        console.log(data);
+        SESSION_UID = data;
+    })
+    .catch(function (error) {
+        console.log(error);
+    });
+}
+
+function expireSession() {
+    console.log('나임');
+    console.log(`${common.API_PATH}/expireSession`);
+    axios.post(`${common.API_PATH}/expireSession`, {
+        sessionUid: SESSION_UID
+    })
+    .then(({ data }) => {
+        console.log(data);
+    })
+    .catch(function (error) {
+        console.log(error);
+    });
+}
+

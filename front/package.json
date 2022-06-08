@@ -2,7 +2,7 @@
   "name": "front",
   "version": "1.0.0",
   "scripts": {
-    "start": "vite",
+    "start": "vite dev --mode .env.local",
     "build": "vite build",
     "serve": "vite preview --host 0.0.0.0 --port 3000"
   },

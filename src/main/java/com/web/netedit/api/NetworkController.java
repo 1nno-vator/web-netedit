@@ -10,11 +10,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpSessionListener;
 import java.util.*;
 
 @RestController
 @RequestMapping(value = "/api")
-public class NetworkController {
+public class NetworkController implements HttpSessionListener {
 
     private final NetworkService networkService;
 
@@ -165,4 +167,5 @@ public class NetworkController {
     public List<Map<String, Object>> getSmInter() {
         return networkService.getSmInter();
     }
+
 }
