@@ -129,6 +129,8 @@ public class WebSessionListener implements HttpSessionListener {
         Optional<SessionEntity> sessionEntity = sessionRepository.findById((String) paramMap.get("sessionUid"));
 
         if (sessionEntity.isPresent()) {
+            System.out.println("SESSION FIND SUCCESS");
+
             Timestamp now = new Timestamp(System.currentTimeMillis());
 
             Timestamp entitiesLastTm = sessionEntity.get().getLastActiveTm();
@@ -143,9 +145,11 @@ public class WebSessionListener implements HttpSessionListener {
                 sessionRepository.save(sessionEntity.get());
                 return "ACTIVE";
             }
+        } else {
+            System.out.println("SESSION FIND FAIL");
+            return "EXPIRED";
         }
 
-        return "EXPIRED";
     }
 
     public void allSessionCheck() {
