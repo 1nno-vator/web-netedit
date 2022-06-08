@@ -202,16 +202,19 @@
     <update id="updateLinkGeometry">
         UPDATE NETEDIT_MS_LINK_2020
         SET GEOM = ST_GEOMETRYFROMTEXT(WKT)
+        WHERE GEOM <![CDATA[<>]]> ST_GEOMETRYFROMTEXT(WKT)
     </update>
 
     <update id="updateNodeGeometry">
         UPDATE NETEDIT_MS_NODE_2020
         SET GEOM = ST_GEOMETRYFROMTEXT(WKT)
+        WHERE GEOM <![CDATA[<>]]> ST_GEOMETRYFROMTEXT(WKT)
     </update>
 
     <update id="updateFacGeometry">
         UPDATE NETEDIT_MS_FACILITY_2020
         SET GEOM = ST_GEOMETRYFROMTEXT(WKT)
+        WHERE GEOM <![CDATA[<>]]> ST_GEOMETRYFROMTEXT(WKT)
     </update>
 
 </mapper>

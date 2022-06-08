@@ -284,8 +284,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setSession();
     roadViewInit();
 
-    // setInterval(sessionCheck, 1000 * 60 * 10); // 10분
-    setInterval(sessionCheck, 10000); // 10분
+    setInterval(sessionCheck, 1000 * 60 * 10); // 10분
+    // setInterval(sessionCheck, 10000); // 10분
 })
 
 function domEventRegister() {
