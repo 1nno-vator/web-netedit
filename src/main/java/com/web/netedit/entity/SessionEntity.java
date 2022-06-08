@@ -18,20 +18,19 @@ public class SessionEntity {
 
     @Id
     @Column(name = "UUID")
-    private String UUID;
+    private String uuid;
 
     @Column(name = "SESSION_ID")
-    private String SESSION_ID;
+    private String sessionId;
 
     @Column(name = "LAST_ACTIVE_TM")
-
-    private java.sql.Timestamp LAST_ACTIVE_TM;
+    private java.sql.Timestamp lastActiveTm;
 
     @Column(name = "ACTIVE_YN")
-    private String ACTIVE_YN;
+    private String activeYn;
 
     @Column(name = "SESSION_SUFFIX")
-    private String SESSION_SUFFIX;
+    private String sessionSuffix;
 
 
 }

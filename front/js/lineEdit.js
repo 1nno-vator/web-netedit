@@ -39,6 +39,7 @@ let NODE_DATA = null;
 let FACILITY_DATA = null;
 
 let SESSION_UID = null;
+let SESSION_SUFFIX = null;
 
 let CIRCLE_RADIUS = 0.0000005;
 
@@ -281,9 +282,10 @@ document.addEventListener('DOMContentLoaded', function() {
     domEventRegister();
 
     setSession();
-
     roadViewInit();
 
+    // setInterval(sessionCheck, 1000 * 60 * 10); // 10분
+    setInterval(sessionCheck, 10000); // 10분
 })
 
 function domEventRegister() {
@@ -972,7 +974,7 @@ function addDrawInteraction() {
 
         drawFeature.setProperties({
             'featureType': 'LINK',
-            'LINK_ID': "CL" + makeTimeKey(),
+            'LINK_ID': "CL" + makeTimeKey() + SESSION_SUFFIX,
             'UP_FROM_NODE': '',
             'UP_TO_NODE': '',
             'UP_LANES': '',
@@ -1138,7 +1140,7 @@ function addDrawInteraction() {
 
             const NODE_DATA_REPO_TEMPLATE = {
                 DATA_TYPE: first ? 'FROM' : 'TO',
-                NODE_ID: last ? "CFN" + makeTimeKey() : "CTN" + makeTimeKey(),
+                NODE_ID: last ? "CFN" + makeTimeKey() + SESSION_SUFFIX : "CTN" + makeTimeKey() + SESSION_SUFFIX,
                 NODE_TYPE: '',
                 NODE_NAME: '',
                 TRAFFIC_LIGHT: '',
@@ -1157,7 +1159,7 @@ function addDrawInteraction() {
 
             FROM_NODE_PROPS = {
                 DATA_TYPE: 'FROM',
-                NODE_ID: "CFN" + makeTimeKey(),
+                NODE_ID: "CFN" + makeTimeKey() + SESSION_SUFFIX,
                 NODE_TYPE: '',
                 NODE_NAME: '',
                 TRAFFIC_LIGHT: '',
@@ -1168,7 +1170,7 @@ function addDrawInteraction() {
 
             TO_NODE_PROPS = {
                 DATA_TYPE: 'TO',
-                NODE_ID: "CTN" + makeTimeKey(),
+                NODE_ID: "CTN" + makeTimeKey() + SESSION_SUFFIX,
                 NODE_TYPE: '',
                 NODE_NAME: '',
                 TRAFFIC_LIGHT: '',
@@ -1231,7 +1233,7 @@ function addFacDrawInteraction() {
 
         drawFacFeature.setProperties({
             'featureType': 'FACILITY',
-            'FAC_ID': "CF" + makeTimeKey(),
+            'FAC_ID': "CF" + makeTimeKey() + SESSION_SUFFIX,
             'FAC_TY': '',
             'WKT': wktFormat.writeGeometry(drawFacFeature.getGeometry()).replace("(", " (").replace(",",", "),
             'USE_YN': 'Y'
@@ -1264,7 +1266,7 @@ function addSplitInteraction() {
         const secondLink = e.features[1];
         const splitNode = new Point(firstLink.getGeometry().getLastCoordinate());
 
-        const splitNodeKey = "SN" + makeTimeKey();
+        const splitNodeKey = "SN" + makeTimeKey() + SESSION_SUFFIX;
         let firstLinkLinkDataRepo = JSON.parse(JSON.stringify(firstLink.get("LINK_DATA_REPO")));
         let secondLinkLinkDataRepo = JSON.parse(JSON.stringify(secondLink.get("LINK_DATA_REPO")));
 
@@ -1976,7 +1978,8 @@ function setSession() {
     axios.post(`${common.API_PATH}/setSession`)
     .then(({ data }) => {
         console.log(data);
-        SESSION_UID = data;
+        SESSION_UID = data.UUID;
+        SESSION_SUFFIX = data.SESSION_SUFFIX;
     })
     .catch(function (error) {
         console.log(error);
@@ -1984,13 +1987,29 @@ function setSession() {
 }
 
 function expireSession() {
-    console.log('나임');
     console.log(`${common.API_PATH}/expireSession`);
     axios.post(`${common.API_PATH}/expireSession`, {
         sessionUid: SESSION_UID
     })
     .then(({ data }) => {
         console.log(data);
+    })
+    .catch(function (error) {
+        console.log(error);
+    });
+}
+
+function sessionCheck() {
+    console.log(`${common.API_PATH}/sessionCheck`);
+    axios.post(`${common.API_PATH}/sessionCheck`, {
+        sessionUid: SESSION_UID
+    })
+    .then(({ data }) => {
+        if (data === "ACTIVE") {
+
+        } else if (data === "EXPIRED") {
+            location.reload();
+        }
     })
     .catch(function (error) {
         console.log(error);
