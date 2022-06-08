@@ -380,7 +380,7 @@ function domEventRegister() {
         if (!isFacMode) {
             applyData();
         } else {
-            applyData(flag);
+            applyData('fac');
         }
 
     })
