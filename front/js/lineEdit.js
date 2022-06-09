@@ -133,10 +133,11 @@ const styleFunction = function (feature) {
         // linestring
         new Style({
           stroke: new Stroke({
-            color: gridSetData === feature.getId() ? '#C70039'
-                    : (inputText === feature.getId() ? '#C70039'
-                        : (selectedFeaturesId.includes(feature.getId()) ? '#FFB2F5' : '#FFE400')
-                      ),
+            color: props.EDIT_YN ? '#62ff00' : (gridSetData === feature.getId() ? '#C70039'
+                            : (inputText === feature.getId() ? '#C70039'
+                                : (selectedFeaturesId.includes(feature.getId()) ? '#FFB2F5' : '#FFE400')
+                              )
+                    ),
             width: props.EDIT_YN ? 8 : (selectedFeaturesId.includes(feature.getId()) ? 5 : 4),
           }),
           text: new Text({
@@ -231,6 +232,7 @@ const styleFunction = function (feature) {
 };
 
 let SHOW_USE_YN = 'Y';
+let SHOW_EDIT_TY = 'ALL';
 
 let targetFeature = null;
 
@@ -480,6 +482,22 @@ function domEventRegister() {
                 target.set("LINK_DATA_REPO", LINK_DATA_REPO);
             }
         });
+    })
+
+    Hotkeys('ctrl+l', function(event, handler) {
+        // Prevent the default refresh event under WINDOWS system
+        event.preventDefault()
+        SHOW_EDIT_TY = 'ALL'
+        console.log(SHOW_EDIT_TY);
+        map.dispatchEvent('moveend');
+    })
+
+    Hotkeys('ctrl+k', function(event, handler) {
+        // Prevent the default refresh event under WINDOWS system
+        event.preventDefault()
+        SHOW_EDIT_TY = null;
+        console.log(SHOW_EDIT_TY);
+        map.dispatchEvent('moveend');
     })
 
     Hotkeys('delete', function(event, handler) {
@@ -1444,6 +1462,13 @@ function makeLinkFeatures(_data) {
       }
       continue;
     };
+    if (SHOW_EDIT_TY !== 'ALL' && d.edit_ty !== "1") {
+          let removeTarget = source.getFeatureById(d.link_id);
+          if (removeTarget) {
+              source.removeFeature(removeTarget)
+          }
+          continue;
+      }
     let _feature = format.readFeature(d.wkt,  {
       dataProjection: 'EPSG:4326',
       featureProjection: 'EPSG:4326'

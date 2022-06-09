@@ -81,10 +81,6 @@
             , EDIT_YN
         FROM NETEDIT_MS_FACILITY_2020
         WHERE 1=1
-        AND ST_Intersects(
-            ST_GeometryFromText(#{WKT}),
-            GEOM
-        )
 
     </select>
 
