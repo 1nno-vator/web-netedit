@@ -757,8 +757,8 @@ function initGrid() {
     width: 280,
     scrollX: false,
     scrollY: false,
-    minBodyHeight: 200,
-    bodyHeight: 200,
+    minBodyHeight: 220,
+    bodyHeight: 220,
     columns: DEFAULT_COLUMN
   });
 
@@ -769,8 +769,8 @@ function initGrid() {
     width: 280,
     scrollX: false,
     scrollY: false,
-    minBodyHeight: 200,
-    bodyHeight: 200,
+    minBodyHeight: 220,
+    bodyHeight: 220,
     columns: DEFAULT_COLUMN
   });
 
@@ -987,6 +987,7 @@ function addDrawInteraction() {
             'LEFT_TURN_UP_DOWN': '',
             'LANE_CHANGE': '',
             'EX_POCKET_NUM': '',
+            'EDIT_YN': '',
             'USER_1': '',
             'USER_2': '',
             'USER_3': '',
@@ -1030,6 +1031,7 @@ function addDrawInteraction() {
                     TRAFFIC_LIGHT: v.traffic_light,
                     DISTRICT_ID: v.district_id,
                     DISTRICT_ID2: v.district_id2,
+                    EDIT_YN: v.edit_yn,
                     WKT: v.wkt
                 })
                 tempNodeSource.addFeature(_feature);
@@ -1146,6 +1148,7 @@ function addDrawInteraction() {
                 TRAFFIC_LIGHT: '',
                 DISTRICT_ID: '',
                 DISTRICT_ID2: '',
+                EDIT_YN: '',
                 WKT: wktFormat.writeGeometry(target).replace("(", " (").replace(",",", ")
             }
 
@@ -1165,6 +1168,7 @@ function addDrawInteraction() {
                 TRAFFIC_LIGHT: '',
                 DISTRICT_ID: '',
                 DISTRICT_ID2: '',
+                EDIT_YN: '',
                 WKT: wktFormat.writeGeometry(new Point(drawFeature.getGeometry().getFirstCoordinate())).replace("(", " (").replace(",",", ")
             }
 
@@ -1176,6 +1180,7 @@ function addDrawInteraction() {
                 TRAFFIC_LIGHT: '',
                 DISTRICT_ID: '',
                 DISTRICT_ID2: '',
+                EDIT_YN: '',
                 WKT: wktFormat.writeGeometry(new Point(drawFeature.getGeometry().getLastCoordinate())).replace("(", " (").replace(",",", ")
             }
 
@@ -1284,6 +1289,7 @@ function addSplitInteraction() {
             TRAFFIC_LIGHT: '',
             DISTRICT_ID: '',
             DISTRICT_ID2: '',
+            EDIT_YN: '',
             WKT: wktFormat.writeGeometry(splitNode).replace("(", " (").replace(",",", ")
         }
 
@@ -1319,6 +1325,7 @@ function addSplitInteraction() {
             TRAFFIC_LIGHT: '',
             DISTRICT_ID: '',
             DISTRICT_ID2: '',
+            EDIT_YN: '',
             WKT: wktFormat.writeGeometry(splitNode).replace("(", " (").replace(",",", ")
         }
 
@@ -1459,6 +1466,7 @@ function makeLinkFeatures(_data) {
       'LEFT_TURN_UP_DOWN': d.left_turn_up_down || '',
       'LANE_CHANGE': d.lane_change || '',
       'EX_POCKET_NUM': d.ex_pocket_num || '',
+      'EDIT_YN': d.edit_yn || '',
       'USER_1': d.user_1 || '',
       'USER_2': d.user_2 || '',
       'USER_3': d.user_3 || '',
@@ -1620,11 +1628,12 @@ function setNodeData(target) {
     if (FROM_NODE_PROPS) {
         const FROM_NODE_PROPS_FORM = {
               NODE_ID: FROM_NODE_PROPS.node_id,
-              NODE_TYPE: FROM_NODE_PROPS.node_type,
-              NODE_NAME: FROM_NODE_PROPS.node_name,
-              TRAFFIC_LIGHT: FROM_NODE_PROPS.traffic_light,
-              DISTRICT_ID: FROM_NODE_PROPS.district_id,
-              DISTRICT_ID2: FROM_NODE_PROPS.district_id2,
+              NODE_TYPE: FROM_NODE_PROPS.node_type || '',
+              NODE_NAME: FROM_NODE_PROPS.node_name || '',
+              TRAFFIC_LIGHT: FROM_NODE_PROPS.traffic_light || '',
+              DISTRICT_ID: FROM_NODE_PROPS.district_id || '',
+              DISTRICT_ID2: FROM_NODE_PROPS.district_id2 || '',
+              EDIT_YN: FROM_NODE_PROPS.edit_yn || '',
               WKT: FROM_NODE_PROPS.wkt
         }
         LINK_PROPS.FROM_NODE_DATA_REPO = FROM_NODE_PROPS_FORM;
@@ -1633,11 +1642,12 @@ function setNodeData(target) {
     if (TO_NODE_PROPS) {
         const TO_NODE_PROPS_FORM = {
               NODE_ID: TO_NODE_PROPS.node_id,
-              NODE_TYPE: TO_NODE_PROPS.node_type,
-              NODE_NAME: TO_NODE_PROPS.node_name,
-              TRAFFIC_LIGHT: TO_NODE_PROPS.traffic_light,
-              DISTRICT_ID: TO_NODE_PROPS.district_id,
-              DISTRICT_ID2: TO_NODE_PROPS.district_id2,
+              NODE_TYPE: TO_NODE_PROPS.node_type || '',
+              NODE_NAME: TO_NODE_PROPS.node_name || '',
+              TRAFFIC_LIGHT: TO_NODE_PROPS.traffic_light || '',
+              DISTRICT_ID: TO_NODE_PROPS.district_id || '',
+              DISTRICT_ID2: TO_NODE_PROPS.district_id2 || '',
+              EDIT_YN: TO_NODE_PROPS.edit_yn || '',
               WKT: TO_NODE_PROPS.wkt
         }
         LINK_PROPS.TO_NODE_DATA_REPO = TO_NODE_PROPS_FORM;

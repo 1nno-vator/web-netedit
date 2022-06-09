@@ -23,6 +23,7 @@
             , USER_3
             , USER_4
             , LEFT_TURN_UP_DOWN
+            , EDIT_YN
         FROM NETEDIT_MS_LINK_2020
     </select>
 
@@ -49,6 +50,7 @@
             , USER_3
             , USER_4
             , LEFT_TURN_UP_DOWN
+            , EDIT_YN
         FROM NETEDIT_MS_LINK_2020
         WHERE 1=1
         <choose>
@@ -76,6 +78,7 @@
             , FAC_TY
             , WKT
             , USE_YN
+            , EDIT_YN
         FROM NETEDIT_MS_FACILITY_2020
         WHERE 1=1
         AND ST_Intersects(
@@ -87,7 +90,7 @@
 
     <select id="getNodeByZone" parameterType="HashMap" resultType="HashMap">
 
-        SELECT NODE_ID, NODE_TYPE, TRAFFIC_LIGHT, NODE_NAME, DISTRICT_ID, DISTRICT_ID2, WKT, USE_YN
+        SELECT NODE_ID, NODE_TYPE, TRAFFIC_LIGHT, NODE_NAME, DISTRICT_ID, DISTRICT_ID2, WKT, USE_YN, EDIT_YN
         FROM NETEDIT_MS_NODE_2020
         WHERE NODE_ID IN
         (
@@ -137,13 +140,13 @@
 
     <select id="getNode" resultType="HashMap">
 
-        SELECT 'FROM' AS DATA_TYPE, NODE_ID, NODE_TYPE, TRAFFIC_LIGHT, NODE_NAME, DISTRICT_ID, DISTRICT_ID2, WKT, USE_YN
+        SELECT 'FROM' AS DATA_TYPE, NODE_ID, NODE_TYPE, TRAFFIC_LIGHT, NODE_NAME, DISTRICT_ID, DISTRICT_ID2, WKT, USE_YN, EDIT_YN
         FROM NETEDIT_MS_NODE_2020
         WHERE NODE_ID = #{FROM_NODE}
 
         UNION ALL
 
-        SELECT 'TO' AS DATA_TYPE, NODE_ID, NODE_TYPE, TRAFFIC_LIGHT, NODE_NAME, DISTRICT_ID, DISTRICT_ID2, WKT, USE_YN
+        SELECT 'TO' AS DATA_TYPE, NODE_ID, NODE_TYPE, TRAFFIC_LIGHT, NODE_NAME, DISTRICT_ID, DISTRICT_ID2, WKT, USE_YN, EDIT_YN
         FROM NETEDIT_MS_NODE_2020
         WHERE NODE_ID = #{TO_NODE}
 
@@ -190,6 +193,7 @@
             , USER_3
             , USER_4
             , LEFT_TURN_UP_DOWN
+            , EDIT_YN
         FROM NETEDIT_MS_LINK_2020
         WHERE LINK_ID = #{FEATURE_ID}
     </select>
@@ -202,19 +206,19 @@
     <update id="updateLinkGeometry">
         UPDATE NETEDIT_MS_LINK_2020
         SET GEOM = ST_GEOMETRYFROMTEXT(WKT)
-        WHERE GEOM <![CDATA[<>]]> ST_GEOMETRYFROMTEXT(WKT)
+        WHERE ST_EQUALS(GEOM,ST_GEOMETRYFROMTEXT(WKT)) = FALSE
     </update>
 
     <update id="updateNodeGeometry">
         UPDATE NETEDIT_MS_NODE_2020
         SET GEOM = ST_GEOMETRYFROMTEXT(WKT)
-        WHERE GEOM <![CDATA[<>]]> ST_GEOMETRYFROMTEXT(WKT)
+        WHERE ST_EQUALS(GEOM,ST_GEOMETRYFROMTEXT(WKT)) = FALSE
     </update>
 
     <update id="updateFacGeometry">
         UPDATE NETEDIT_MS_FACILITY_2020
         SET GEOM = ST_GEOMETRYFROMTEXT(WKT)
-        WHERE GEOM <![CDATA[<>]]> ST_GEOMETRYFROMTEXT(WKT)
+        WHERE ST_EQUALS(GEOM,ST_GEOMETRYFROMTEXT(WKT)) = FALSE
     </update>
 
 </mapper>

@@ -24,6 +24,8 @@ public class FacilityEntity {
     private String WKT;
     private String USE_YN;
 
+    private String EDIT_YN;
+
     public void setAll(FacilityEntity _facilityEntity) {
         if (_facilityEntity.FAC_TY != null) {
             this.FAC_TY = _facilityEntity.FAC_TY;
@@ -33,6 +35,10 @@ public class FacilityEntity {
 
         if (_facilityEntity.USE_YN != null) {
             this.USE_YN = _facilityEntity.USE_YN;
+        }
+
+        if (_facilityEntity.EDIT_YN != null) {
+            this.EDIT_YN = _facilityEntity.EDIT_YN;
         }
     }
 

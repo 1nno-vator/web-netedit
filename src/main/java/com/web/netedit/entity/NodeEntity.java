@@ -28,6 +28,7 @@ public class NodeEntity {
     private String WKT;
 
     private String USE_YN;
+    private String EDIT_YN;
 
     public void setAll(NodeEntity _nodeEntity) {
 
@@ -54,6 +55,11 @@ public class NodeEntity {
         this.WKT = _nodeEntity.WKT;
 
         this.USE_YN = _nodeEntity.USE_YN != null ? _nodeEntity.USE_YN : "Y";
+
+        if (_nodeEntity.EDIT_YN != null) {
+            this.EDIT_YN = _nodeEntity.EDIT_YN;
+        }
+
     }
 
 }
