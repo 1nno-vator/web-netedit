@@ -497,9 +497,9 @@ function domEventRegister() {
         feature.setStyle(iconStyle);
         markerSource.addFeature(feature);
 
-        console.log(feature);
+        const copyText = XCRD + "," + YCRD;
 
-        copyToClipboard(new WKT().writeFeature(feature));
+        copyToClipboard(copyText);
 
         toastr.options.timeOut = 100;
         toastr.options.positionClass = 'toast-bottom-right';
