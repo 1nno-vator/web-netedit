@@ -133,12 +133,11 @@ const styleFunction = function (feature) {
         // linestring
         new Style({
           stroke: new Stroke({
-            color: gridSetData === feature.getId()
-                    ? '#C70039'
+            color: gridSetData === feature.getId() ? '#C70039'
                     : (inputText === feature.getId() ? '#C70039'
                         : (selectedFeaturesId.includes(feature.getId()) ? '#FFB2F5' : '#FFE400')
                       ),
-            width: selectedFeaturesId.includes(feature.getId()) ? 5 : 4,
+            width: props.EDIT_YN ? 8 : (selectedFeaturesId.includes(feature.getId()) ? 5 : 4),
           }),
           text: new Text({
             font: '8px Verdana',
