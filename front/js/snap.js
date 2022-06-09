@@ -18,10 +18,14 @@ import MultiPoint from 'ol/geom/MultiPoint';
 import { platformModifierKeyOnly } from 'ol/events/condition';
 import * as olSphere from 'ol/sphere';
 
-// import BlueArrowImg from '../data/resize_blue_arrow.png';
-// import NormalArrowImg from '../data/resize_normal_arrow.png';
+import MousePosition from 'ol/control/MousePosition';
+import {createStringXY} from 'ol/coordinate';
+import {defaults as defaultControls} from 'ol/control';
+
+
 import BlueArrowImg from '../data/resize_pink_arrow.png';
 import NormalArrowImg from '../data/resize_yellow_arrow.png';
+import Marker from '../data/marker.png';
 
 import UndoRedo from 'ol-ext/interaction/UndoRedo'
 import { fromExtent } from 'ol/geom/Polygon';
@@ -43,6 +47,21 @@ let map = null;
 let SHOW_EDIT_TY = 'ALL';
 
 let GRID_SET_LINK_ID = null;
+
+const markerSource = new VectorSource({});
+const markerLayer = new VectorLayer({
+  source: markerSource
+});
+
+const mousePositionControl = new MousePosition({
+  coordinateFormat: createStringXY(6),
+  projection: 'EPSG:4326',
+  // comment the following two lines to have the mouse position
+  // be placed within the map.
+  className: 'custom-mouse-position',
+  target: document.getElementById('mouse-position'),
+});
+
 
 const source = new VectorSource({
   features: new Collection(),
@@ -70,6 +89,15 @@ const smLayer = new VectorLayer({
 let displayZoneFeature = null;
 
 let saveDataArchive = [];
+
+const iconStyle = new Style({
+  image: new Icon({
+    anchor: [0.5, 0.96],
+    scale: 0.1,
+    src: Marker
+  }),
+});
+
 
 const styleFunction = function (feature) {
   const props = feature.getProperties();
@@ -331,6 +359,24 @@ function domEventRegister() {
       })
     });
 
+    Hotkeys('a', function(event, handler) {
+        const [XCRD, YCRD] = (document.getElementById('mouse-position').innerText).split(", ");
+
+        markerSource.clear();
+        let feature = new Feature({
+                    geometry: new Point([Number(XCRD), Number(YCRD)])
+                })
+        feature.setStyle(iconStyle);
+        markerSource.addFeature(feature);
+
+        copyToClipboard(new WKT().writeFeature(feature));
+
+        toastr.options.timeOut = 100;
+        toastr.options.positionClass = 'toast-bottom-right';
+        toastr.success('Coppied!')
+
+    })
+
     Hotkeys('ctrl+l', function(event, handler) {
         // Prevent the default refresh event under WINDOWS system
         event.preventDefault()
@@ -376,10 +422,12 @@ function initMap() {
           common._baseMapLayer,
           common._baseMapInfoLayer,
           smLayer,
-          layer
+          layer,
+          markerLayer
         ],
         view: common._mainMapView,
-        loadTilesWhileAnimating: true
+        loadTilesWhileAnimating: true,
+        controls: defaultControls().extend([mousePositionControl])
     });
 
     let layerSwitcher = new LayerSwitcher({
@@ -1107,4 +1155,13 @@ function wktUpdate() {
             _f.set("TO_NODE_DATA_REPO", TO_NODE_DATA_REPO);
         }
     })
+}
+
+function copyToClipboard(val) {
+  const t = document.createElement("textarea");
+  document.body.appendChild(t);
+  t.value = val;
+  t.select();
+  document.execCommand('copy');
+  document.body.removeChild(t);
 }
