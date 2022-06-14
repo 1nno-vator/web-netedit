@@ -137,7 +137,7 @@ public class WebSessionListener implements HttpSessionListener {
 
             long diff = now.getTime() - entitiesLastTm.getTime();
 
-            if (diff / (1000 * 60) >= 10) { // 10분 이상
+            if (diff / (1000 * 60) >= 20) { // 20분 이상
                 sessionRepository.delete(sessionEntity.get());
                 return "EXPIRED";
             } else {
@@ -163,7 +163,7 @@ public class WebSessionListener implements HttpSessionListener {
 
             long diff = now.getTime() - entitiesLastTm.getTime();
 
-            if (diff / (1000 * 60) >= 10) { // 10분 이상
+            if (diff / (1000 * 60) >= 20) { // 10분 이상
                 sessionRepository.delete(se);
             }
         }

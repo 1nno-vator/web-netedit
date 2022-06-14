@@ -47,6 +47,9 @@ public class LinkEntity {
     private String LEFT_TURN_UP_DOWN;
     private String EDIT_YN;
 
+    private String ROAD_RANK;
+    private String FACILITY_KIND;
+
     public void setAll(LinkEntity _linkEntity) {
 
         if (_linkEntity.UP_FROM_NODE != null) {
@@ -127,6 +130,14 @@ public class LinkEntity {
 
         if (_linkEntity.EDIT_YN != null) {
             this.EDIT_YN = _linkEntity.EDIT_YN;
+        }
+
+        if (_linkEntity.ROAD_RANK != null) {
+            this.ROAD_RANK = _linkEntity.ROAD_RANK;
+        }
+
+        if (_linkEntity.FACILITY_KIND != null) {
+            this.FACILITY_KIND = _linkEntity.FACILITY_KIND;
         }
 
     }

@@ -320,7 +320,7 @@ function domEventRegister() {
         event.preventDefault();
         // Chrome에서는 returnValue 설정이 필요함
         expireSession()
-        event.returnValue = '';
+        // event.returnValue = '';
     });
 
 
@@ -1055,6 +1055,8 @@ function addDrawInteraction() {
             'USER_2': '',
             'USER_3': '',
             'USER_4': '',
+            'ROAD_RANK': '101',
+            'FACILITY_KIND': '0',
             'WKT': wktFormat.writeGeometry(drawFeature.getGeometry()).replace("(", " (").replace(",",", ")
         })
         drawFeature.setId(drawFeature.get("LINK_ID"));
@@ -1541,6 +1543,8 @@ function makeLinkFeatures(_data) {
       'USER_2': d.user_2 || '',
       'USER_3': d.user_3 || '',
       'USER_4': d.user_4 || '',
+      'ROAD_RANK': d.road_rank || '101',
+      'FACILITY_KIND': d.facility_kind || '0',
       'WKT': d.wkt
     })
     if (NODE_DATA) {
@@ -1628,6 +1632,15 @@ function setGridEditable() {
       editor: 'text'
     }
   ];
+
+  LINK_GRID_INSTANCE.on('editingStart', (ev) => {
+      const rowInfo = LINK_GRID_INSTANCE.getRowAt(ev.rowKey);
+      if (rowInfo.name === "ROAD_RANK" || rowInfo.name === "FACILITY_KIND") {
+          ev.stop();
+      } else {
+
+      }
+  })
 
   LINK_GRID_INSTANCE.on('afterChange', (ev) => {
       const changes = ev.changes[0];
@@ -1836,6 +1849,8 @@ function applyData(flag) {
     }
 
     console.log(DATA_REPO);
+
+    sessionCheck();
 
     // axios.post(`${urlPrefix}/saveData/${_dataType}`, sendData)
     axios.post(POST_URL, DATA_REPO)
@@ -2085,9 +2100,16 @@ function sessionCheck() {
         sessionUid: SESSION_UID
     })
     .then(({ data }) => {
+        console.log('session-check')
+        console.log(data);
+
         if (data === "ACTIVE") {
 
         } else if (data === "EXPIRED") {
+
+            SESSION_UID = null;
+            SESSION_SUFFIX = null;
+
             location.reload();
         }
     })

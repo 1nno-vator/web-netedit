@@ -24,6 +24,8 @@
             , USER_4
             , LEFT_TURN_UP_DOWN
             , EDIT_YN
+            , ROAD_RANK
+            , FACILITY_KIND
         FROM NETEDIT_MS_LINK_2020
     </select>
 
@@ -51,6 +53,8 @@
             , USER_4
             , LEFT_TURN_UP_DOWN
             , EDIT_YN
+            , ROAD_RANK
+            , FACILITY_KIND
         FROM NETEDIT_MS_LINK_2020
         WHERE 1=1
         <choose>
@@ -190,6 +194,8 @@
             , USER_4
             , LEFT_TURN_UP_DOWN
             , EDIT_YN
+            , ROAD_RANK
+            , FACILITY_KIND
         FROM NETEDIT_MS_LINK_2020
         WHERE LINK_ID = #{FEATURE_ID}
     </select>
