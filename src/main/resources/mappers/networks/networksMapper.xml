@@ -201,7 +201,7 @@
     </select>
 
     <select id="getSmInter" parameterType="HashMap" resultType="HashMap">
-        SELECT WKT
+        SELECT COMMNT, WKT
         FROM NETEDIT_MS_SM_INTER
     </select>
 

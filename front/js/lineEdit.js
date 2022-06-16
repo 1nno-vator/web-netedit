@@ -122,13 +122,20 @@ const smSource = new VectorSource({
 });
 const smLayer = new VectorLayer({
   source: smSource,
-    style: new Style({
-        image: new CircleStyle({
-              radius: 13,
-              fill: new Fill({color: 'rgba(255, 0, 0, 0.6)'})
-          }),
-        zIndex: 999,
-      })
+    style: function(feature) {
+
+      let commnt = feature.get("commnt");
+
+      return new Style({
+              image: new CircleStyle({
+                    radius: 13,
+                    fill: new Fill({
+                        color: commnt === '20220614' ? 'rgba(50, 232, 17, 0.6)' : 'rgba(255, 0, 0, 0.6)'
+                    })
+                }),
+              zIndex: 999,
+            })
+    }
 });
 
 let displayZoneFeature = null;
@@ -532,7 +539,6 @@ function domEventRegister() {
         // Prevent the default refresh event under WINDOWS system
         event.preventDefault()
         SHOW_EDIT_TY = 'ALL'
-        console.log(SHOW_EDIT_TY);
         map.dispatchEvent('moveend');
     })
 
@@ -540,7 +546,6 @@ function domEventRegister() {
         // Prevent the default refresh event under WINDOWS system
         event.preventDefault()
         SHOW_EDIT_TY = null;
-        console.log(SHOW_EDIT_TY);
         map.dispatchEvent('moveend');
     })
 
@@ -1280,7 +1285,6 @@ function addFacDrawInteraction() {
         source: facilitySource,
         condition: function(e) {
             // when the point's button is 1(leftclick), allows drawing
-            console.log(e);
               if (e.originalEvent.buttons === 1) {
                 return true;
               } else {
@@ -1434,6 +1438,7 @@ function getSmInter() {
               dataProjection: 'EPSG:4326',
               featureProjection: 'EPSG:4326'
             });
+            _feature.set("commnt", d.commnt);
             smSource.addFeature(_feature);
         }
 
@@ -1478,8 +1483,6 @@ function getFeaturesByZone(_displayZoneWKT) {
     sggCode: getCheckValue()
   })
   .then(({ data }) => {
-
-    console.log(data);
 
     LINK_DATA = data.LINK_DATA;
     NODE_DATA = data.NODE_DATA;
@@ -2069,7 +2072,6 @@ function generateUUID() { // Public Domain/MIT
     });
 }
 function setSession() {
-    console.log(`${common.API_PATH}/setSession`);
     axios.post(`${common.API_PATH}/setSession`)
     .then(({ data }) => {
         console.log(data);
@@ -2082,12 +2084,11 @@ function setSession() {
 }
 
 function expireSession() {
-    console.log(`${common.API_PATH}/expireSession`);
     axios.post(`${common.API_PATH}/expireSession`, {
         sessionUid: SESSION_UID
     })
     .then(({ data }) => {
-        console.log(data);
+        // console.log(data);
     })
     .catch(function (error) {
         console.log(error);
@@ -2095,13 +2096,10 @@ function expireSession() {
 }
 
 function sessionCheck() {
-    console.log(`${common.API_PATH}/sessionCheck`);
     axios.post(`${common.API_PATH}/sessionCheck`, {
         sessionUid: SESSION_UID
     })
     .then(({ data }) => {
-        console.log('session-check')
-        console.log(data);
 
         if (data === "ACTIVE") {
 
