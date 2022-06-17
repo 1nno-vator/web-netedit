@@ -369,7 +369,7 @@ function domEventRegister() {
         feature.setStyle(iconStyle);
         markerSource.addFeature(feature);
 
-        const copyText = XCRD + "," + YCRD;
+        const copyText = YCRD + "," + XCRD;
 
         copyToClipboard(copyText);
 
