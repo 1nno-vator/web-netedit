@@ -50,6 +50,28 @@ public class LinkEntity {
     private String ROAD_RANK;
     private String FACILITY_KIND;
 
+    private String NAVI_LV;
+    private String KOTI_LV;
+    private String LEN;
+    private String ST_DIR;
+    private String ED_DIR;
+    private String LINK_CATEGORY;
+    private String ONEWAY;
+    private String WDTH;
+    private String LANES;
+    private String TOLL_NAME;
+    private String ROAD_FACILITY_NAME;
+    private String ROAD_NO;
+    private String HOV_BUSLANE;
+    private String SHOV_BUSLANE;
+    private String AUTOEXCUSIVE;
+    private String NUM_CROSS;
+    private String BARRIER;
+    private String MAXSPEED;
+    private String TL_DENSITY;
+    private String TRAF_ID_P;
+    private String TRAF_ID_N;
+
     public void setAll(LinkEntity _linkEntity) {
 
         if (_linkEntity.UP_FROM_NODE != null) {
@@ -138,6 +160,98 @@ public class LinkEntity {
 
         if (_linkEntity.FACILITY_KIND != null) {
             this.FACILITY_KIND = _linkEntity.FACILITY_KIND;
+        }
+
+        if (_linkEntity.NAVI_LV != null) {
+            this.NAVI_LV = _linkEntity.NAVI_LV;
+        }
+
+        if (_linkEntity.KOTI_LV != null) {
+            this.KOTI_LV = _linkEntity.KOTI_LV;
+        }
+
+        if (_linkEntity.LEN != null) {
+            this.LEN = _linkEntity.LEN;
+        }
+
+        if (_linkEntity.ST_DIR != null) {
+            this.ST_DIR = _linkEntity.ST_DIR;
+        }
+
+        if (_linkEntity.ED_DIR != null) {
+            this.ED_DIR = _linkEntity.ED_DIR;
+        }
+
+        if (_linkEntity.LINK_CATEGORY != null) {
+            this.LINK_CATEGORY = _linkEntity.LINK_CATEGORY;
+        }
+
+        if (_linkEntity.ONEWAY != null) {
+            this.ONEWAY = _linkEntity.ONEWAY;
+        }
+
+        if (_linkEntity.WDTH != null) {
+            this.WDTH = _linkEntity.WDTH;
+        }
+
+        if (_linkEntity.LANES != null) {
+            this.LANES = _linkEntity.LANES;
+        }
+
+        if (_linkEntity.TOLL_NAME != null) {
+            this.TOLL_NAME = _linkEntity.TOLL_NAME;
+        }
+
+        if (_linkEntity.ROAD_FACILITY_NAME != null) {
+            this.ROAD_FACILITY_NAME = _linkEntity.ROAD_FACILITY_NAME;
+        }
+
+        if (_linkEntity.ROAD_NO != null) {
+            this.ROAD_NO = _linkEntity.ROAD_NO;
+        }
+
+        if (_linkEntity.HOV_BUSLANE != null) {
+            this.HOV_BUSLANE = _linkEntity.HOV_BUSLANE;
+        }
+
+        if (_linkEntity.SHOV_BUSLANE != null) {
+            this.SHOV_BUSLANE = _linkEntity.SHOV_BUSLANE;
+        }
+
+        if (_linkEntity.AUTOEXCUSIVE != null) {
+            this.AUTOEXCUSIVE = _linkEntity.AUTOEXCUSIVE;
+        }
+
+        if (_linkEntity.SHOV_BUSLANE != null) {
+            this.SHOV_BUSLANE = _linkEntity.SHOV_BUSLANE;
+        }
+
+        if (_linkEntity.NUM_CROSS != null) {
+            this.NUM_CROSS = _linkEntity.NUM_CROSS;
+        }
+
+        if (_linkEntity.BARRIER != null) {
+            this.BARRIER = _linkEntity.BARRIER;
+        }
+
+        if (_linkEntity.MAXSPEED != null) {
+            this.MAXSPEED = _linkEntity.MAXSPEED;
+        }
+
+        if (_linkEntity.BARRIER != null) {
+            this.BARRIER = _linkEntity.BARRIER;
+        }
+
+        if (_linkEntity.TL_DENSITY != null) {
+            this.TL_DENSITY = _linkEntity.TL_DENSITY;
+        }
+
+        if (_linkEntity.TRAF_ID_P != null) {
+            this.TRAF_ID_P = _linkEntity.TRAF_ID_P;
+        }
+
+        if (_linkEntity.TRAF_ID_N != null) {
+            this.TRAF_ID_N = _linkEntity.TRAF_ID_N;
         }
 
     }

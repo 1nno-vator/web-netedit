@@ -297,6 +297,31 @@ const DEFAULT_COLUMN = [
 let DELETE_FEATURES_ID = [];
 let EXCLUDE_FEATURES_ID = [];
 
+class CustomTextEditor {
+  constructor(props) {
+    const el = document.createElement('input');
+    const { maxLength } = props.columnInfo.editor.options;
+
+    el.type = 'text';
+    // el.maxLength = maxLength;
+    el.value = String(props.value);
+
+    this.el = el;
+  }
+
+  getElement() {
+    return this.el;
+  }
+
+  getValue() {
+    return this.el.value;
+  }
+
+  mounted() {
+    this.el.select();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     initMap();
     initGrid();
@@ -1062,6 +1087,27 @@ function addDrawInteraction() {
             'USER_4': '',
             'ROAD_RANK': '101',
             'FACILITY_KIND': '0',
+            'NAVI_LV' : '',
+            'KOTI_LV' : '',
+            'LEN' : '',
+            'ST_DIR' : '',
+            'ED_DIR' : '',
+            'LINK_CATEGORY' : '',
+            'ONEWAY' : '',
+            'WDTH' : '',
+            'LANES' : '',
+            'TOLL_NAME' : '',
+            'ROAD_FACILITY_NAME' : '',
+            'ROAD_NO' : '',
+            'HOV_BUSLANE' : '',
+            'SHOV_BUSLANE' : '',
+            'AUTOEXCUSIVE' : '',
+            'NUM_CROSS' : '',
+            'BARRIER' : '',
+            'MAXSPEED' : '-1',
+            'TL_DENSITY' : '',
+            'TRAF_ID_P' : '',
+            'TRAF_ID_N' : '',
             'WKT': wktFormat.writeGeometry(drawFeature.getGeometry()).replace("(", " (").replace(",",", ")
         })
         drawFeature.setId(drawFeature.get("LINK_ID"));
@@ -1548,6 +1594,27 @@ function makeLinkFeatures(_data) {
       'USER_4': d.user_4 || '',
       'ROAD_RANK': d.road_rank || '101',
       'FACILITY_KIND': d.facility_kind || '0',
+      'NAVI_LV' : d.navi_lv || '',
+      'KOTI_LV' : d.koti_lv || '',
+      'LEN' : d.len || '',
+      'ST_DIR' : d.st_dir || '',
+      'ED_DIR' : d.ed_dir || '',
+      'LINK_CATEGORY' : d.link_category || '',
+      'ONEWAY' : d.oneway || '',
+      'WDTH' : d.wdth || '',
+      'LANES' : d.lanes || '',
+      'TOLL_NAME' : d.toll_name || '',
+      'ROAD_FACILITY_NAME' : d.road_facility_name || '',
+      'ROAD_NO' : d.road_no || '',
+      'HOV_BUSLANE' : d.hov_buslane || '',
+      'SHOV_BUSLANE' : d.shov_buslane || '',
+      'AUTOEXCUSIVE' : d.autoexcusive || '',
+      'NUM_CROSS' : d.num_cross || '',
+      'BARRIER' : d.barrier || '',
+      'MAXSPEED' : d.maxspeed || '-1',
+      'TL_DENSITY' : d.tl_density || '',
+      'TRAF_ID_P' : d.traf_id_p || '',
+      'TRAF_ID_N' : d.traf_id_n || '',
       'WKT': d.wkt
     })
     if (NODE_DATA) {
@@ -1632,7 +1699,12 @@ function setGridEditable() {
       name: 'value',
       align: 'center',
       valign: 'middle',
-      editor: 'text'
+      editor: {
+          type: CustomTextEditor,
+          options: {
+              maxLength: 10
+          }
+      }
     }
   ];
 
@@ -1692,6 +1764,29 @@ function setGridEditable() {
   LINK_GRID_INSTANCE.setColumns(EDITABLE_COLUMN);
   FROM_NODE_GRID_INSTANCE.setColumns(EDITABLE_COLUMN);
   TO_NODE_GRID_INSTANCE.setColumns(EDITABLE_COLUMN);
+
+}
+
+function setDisabledColumn() {
+
+    const LINK_COLUMNS = LINK_GRID_INSTANCE.getData();
+
+    const LINK_DISABLED_COLUMS = [
+        'road_rank', 'facility_kind', 'navi_lv', 'koti_lv', 'len', 'st_dir', 'ed_dir', 'link_category', 'oneway'
+        , 'wdth,lanes', 'toll_name', 'road_facility_name', 'road_no', 'hov_buslane', 'shov_buslane', 'autoexcusive'
+        , 'num_cross', 'barrier', 'maxspeed', 'tl_density', 'traf_id_p', 'traf_id_n', 'wdth', 'lanes'
+    ].map(v => v.toUpperCase());
+
+    LINK_COLUMNS.forEach(({ rowKey, name }) => {
+
+        if (LINK_DISABLED_COLUMS.includes(name)) {
+            LINK_GRID_INSTANCE.disableRow(rowKey)
+        }
+
+
+    })
+
+
 }
 
 function setNodeData(target) {
@@ -1795,6 +1890,8 @@ function setGridData(target, flag) {
         TO_NODE_GRID_INSTANCE.resetData(TO_NODE_GRID_DATA);
 
         GRID_SET_LINK_ID = target.get("LINK_ID");
+
+        setDisabledColumn();
     }
 
 

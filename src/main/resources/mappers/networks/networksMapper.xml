@@ -26,6 +26,27 @@
             , EDIT_YN
             , ROAD_RANK
             , FACILITY_KIND
+            , NAVI_LV
+            , KOTI_LV
+            , LEN
+            , ST_DIR
+            , ED_DIR
+            , LINK_CATEGORY
+            , ONEWAY
+            , WDTH
+            , LANES
+            , TOLL_NAME
+            , ROAD_FACILITY_NAME
+            , ROAD_NO
+            , HOV_BUSLANE
+            , SHOV_BUSLANE
+            , AUTOEXCUSIVE
+            , NUM_CROSS
+            , BARRIER
+            , MAXSPEED
+            , TL_DENSITY
+            , TRAF_ID_P
+            , TRAF_ID_N
         FROM NETEDIT_MS_LINK_2020
     </select>
 
@@ -55,6 +76,27 @@
             , EDIT_YN
             , ROAD_RANK
             , FACILITY_KIND
+        , NAVI_LV
+        , KOTI_LV
+        , LEN
+        , ST_DIR
+        , ED_DIR
+        , LINK_CATEGORY
+        , ONEWAY
+        , WDTH
+        , LANES
+        , TOLL_NAME
+        , ROAD_FACILITY_NAME
+        , ROAD_NO
+        , HOV_BUSLANE
+        , SHOV_BUSLANE
+        , AUTOEXCUSIVE
+        , NUM_CROSS
+        , BARRIER
+        , MAXSPEED
+        , TL_DENSITY
+        , TRAF_ID_P
+        , TRAF_ID_N
         FROM NETEDIT_MS_LINK_2020
         WHERE 1=1
         <choose>
@@ -196,6 +238,27 @@
             , EDIT_YN
             , ROAD_RANK
             , FACILITY_KIND
+            , NAVI_LV
+            , KOTI_LV
+            , LEN
+            , ST_DIR
+            , ED_DIR
+            , LINK_CATEGORY
+            , ONEWAY
+            , WDTH
+            , LANES
+            , TOLL_NAME
+            , ROAD_FACILITY_NAME
+            , ROAD_NO
+            , HOV_BUSLANE
+            , SHOV_BUSLANE
+            , AUTOEXCUSIVE
+            , NUM_CROSS
+            , BARRIER
+            , MAXSPEED
+            , TL_DENSITY
+            , TRAF_ID_P
+            , TRAF_ID_N
         FROM NETEDIT_MS_LINK_2020
         WHERE LINK_ID = #{FEATURE_ID}
     </select>
