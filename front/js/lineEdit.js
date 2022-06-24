@@ -1117,7 +1117,7 @@ function addDrawInteraction() {
 
         const intersect = source.getFeaturesInExtent(drawFeature.getGeometry().getExtent());
 
-        if (intersect.length > 0) { // 기 존재 노드 하나라도 포함
+        if (intersect.length > 0) {
             let uniqueNodes = [];
 
             intersect.forEach(v => {
@@ -1536,7 +1536,6 @@ function getFeaturesByZone(_displayZoneWKT) {
 
     makeLinkFeatures(LINK_DATA);
     makeFacFeatures(FACILITY_DATA);
-    // makeNodeFeatures(NODE_DATA);
 
   })
   .catch(function (error) {

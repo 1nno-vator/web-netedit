@@ -10,6 +10,7 @@ import com.web.netedit.util.NetworkUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.*;
 
 @Service
@@ -82,6 +83,7 @@ public class NetworkService {
         LinkEntity newLinkEntity = new LinkEntity();
         newLinkEntity = (LinkEntity) util.convertMapToObject(_linkDataRepo, newLinkEntity);
         newLinkEntity.setUSE_YN("Y");
+        newLinkEntity.setLAST_UPDATE_TM(new Timestamp(System.currentTimeMillis()));
 
         Optional<LinkEntity> originLinkEntity = linkRepository.findById((String) _linkDataRepo.get("LINK_ID"));
 

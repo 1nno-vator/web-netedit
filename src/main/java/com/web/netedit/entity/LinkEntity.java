@@ -6,6 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.sql.Timestamp;
 import java.util.Map;
 
 @Getter @Setter
@@ -71,6 +72,8 @@ public class LinkEntity {
     private String TL_DENSITY;
     private String TRAF_ID_P;
     private String TRAF_ID_N;
+
+    private java.sql.Timestamp LAST_UPDATE_TM;
 
     public void setAll(LinkEntity _linkEntity) {
 
@@ -252,6 +255,12 @@ public class LinkEntity {
 
         if (_linkEntity.TRAF_ID_N != null) {
             this.TRAF_ID_N = _linkEntity.TRAF_ID_N;
+        }
+
+        if (_linkEntity.LAST_UPDATE_TM != null) {
+            this.LAST_UPDATE_TM = new Timestamp(System.currentTimeMillis());
+        } else {
+            this.LAST_UPDATE_TM = new Timestamp(System.currentTimeMillis());
         }
 
     }
